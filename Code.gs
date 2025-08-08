@@ -1,4 +1,4 @@
-// Основной файл Code.gs для Google Apps Script - УЛУЧШЕННАЯ ВЕРСИЯ С TIKTOK МЕТРИКАМИ
+// Основной файл Code.gs для Google Apps Script - ОПТИМИЗИРОВАННЫЙ
 
 /**
  * Функция получения данных за SQL запитом из БД - ВОЗВРАЩАЕТ ДАННЫЕ НАПРЯМУЮ
@@ -148,7 +148,7 @@ function include(filename) {
 }
 
 /**
- * Основная функция для построения аналитики - УЛУЧШЕННАЯ С TIKTOK МЕТРИКАМИ
+ * Основная функция для построения аналитики - ОПТИМИЗИРОВАННАЯ
  */
 function buildChartForArticle(article, periodStart, periodEnd) {
   try {
@@ -497,15 +497,11 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     const resultMapByGroup = {};
     const resultMapByBuyer = {};
     const resultMapByAccount = {};
-    // НОВАЯ СТРУКТУРА: Байер -> Группа объявлений
-    const resultMapByBuyerGroup = {};
     const fbDataMap = {};
     const fbDataMapByGroupId = {};
     const fbDataMapByGroup = {};
     const fbDataMapByBuyer = {};
     const fbDataMapByAccount = {};
-    // НОВАЯ СТРУКТУРА: Байер -> Группа объявлений (для TikTok данных)
-    const fbDataMapByBuyerGroup = {};
     const groupsByDate = {};
     const buyersByDate = {};
     const accountsByDate = {};
@@ -513,8 +509,6 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     const globalBuyers = new Set();
     const globalAccounts = new Set();
     const groupIdToNameMap = {};
-    // НОВАЯ СТРУКТУРА: Отслеживание групп по байерам
-    const buyerGroupsMap = {}; // { buyer: Set(groups) }
     let totalLeadsAll = 0, totalClicksAll = 0;
     const globalVideos = new Set(), globalSites = new Set();
 
@@ -552,19 +546,6 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         
         if (!buyersByDate[dateStr]) buyersByDate[dateStr] = [];
         buyersByDate[dateStr].push(campaignInfo.buyer);
-        
-        // НОВАЯ СТРУКТУРА: Байер -> Группа (по ID группы)
-        if (groupId) {
-          const buyerGroupKey = `${campaignInfo.buyer}:::${groupId}`;
-          if (!resultMapByBuyerGroup[buyerGroupKey]) resultMapByBuyerGroup[buyerGroupKey] = {};
-          if (!resultMapByBuyerGroup[buyerGroupKey][dateStr]) resultMapByBuyerGroup[buyerGroupKey][dateStr] = { leads: 0, spend: 0 };
-          resultMapByBuyerGroup[buyerGroupKey][dateStr].leads += leads;
-          resultMapByBuyerGroup[buyerGroupKey][dateStr].spend += spend;
-          
-          // Отслеживаем группы для каждого байера
-          if (!buyerGroupsMap[campaignInfo.buyer]) buyerGroupsMap[campaignInfo.buyer] = new Set();
-          buyerGroupsMap[campaignInfo.buyer].add(groupId);
-        }
       }
 
       // По аккаунтам
@@ -586,18 +567,23 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       if (!maxDate || dateObj > maxDate) maxDate = dateObj;
     });
 
-    // Обработка данных TikTok - УЛУЧШЕННАЯ С БАЙЕР-ГРУППА СТРУКТУРОЙ
+    // Обработка данных TikTok
     console.log('Processing TikTok data...');
     tiktokRows.forEach(row => {
       const fullName = String(row.campaign_name || '').trim();
       const groupName = String(row.adv_group_name || '').trim();
       const groupId = String(row.adv_group_id || '').trim();
-      const advName = String(row.adv_name || '').trim();
+      const advName = String(row.adv_name || '').trim(); // Добавляем логирование названия рекламы
       const dateObj = new Date(row.adv_date);
       if (isNaN(dateObj.getTime())) return;
       
       const campaignInfo = parseCampaignName(fullName);
       if (campaignInfo.article !== article) return;
+      
+      // Логируем для отладки
+      if (advName) {
+        console.log('Found adv_name:', advName, 'for date:', Utilities.formatDate(dateObj, 'Europe/Kiev', 'yyyy-MM-dd'));
+      }
       
       const dateStr = Utilities.formatDate(dateObj, 'Europe/Kiev', 'yyyy-MM-dd');
 
@@ -611,7 +597,6 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       if (!groupsByDate[dateStr]) groupsByDate[dateStr] = [];
       groupsByDate[dateStr].push(groupName);
 
-      // Инициализация общих TikTok данных
       if (!fbDataMap[dateStr]) {
         fbDataMap[dateStr] = {
           adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
@@ -669,28 +654,6 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         fbDataMapByBuyer[campaignInfo.buyer][dateStr].videoName.push(row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '' ? String(row.adv_name).trim() : '');
         fbDataMapByBuyer[campaignInfo.buyer][dateStr].siteUrl.push(row.target_url !== undefined && row.target_url !== null && row.target_url !== '' ? String(row.target_url).trim() : '');
         fbDataMapByBuyer[campaignInfo.buyer][dateStr].budget.push('');
-        
-        // НОВОЕ: По байер-группам
-        if (groupId) {
-          const buyerGroupKey = `${campaignInfo.buyer}:::${groupId}`;
-          if (!fbDataMapByBuyerGroup[buyerGroupKey]) fbDataMapByBuyerGroup[buyerGroupKey] = {};
-          if (!fbDataMapByBuyerGroup[buyerGroupKey][dateStr]) {
-            fbDataMapByBuyerGroup[buyerGroupKey][dateStr] = {
-              adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
-              cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-            };
-          }
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].adId.push(row.adv_id !== undefined && row.adv_id !== null ? String(row.adv_id) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].freq.push(row.frequency !== undefined && row.frequency !== null ? String(row.frequency) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].ctr.push(row.ctr !== undefined && row.ctr !== null ? String(row.ctr) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].cpm.push(row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].linkClicks.push(row.clicks_on_link !== undefined && row.clicks_on_link !== null ? String(row.clicks_on_link) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].cpc.push(row.cpc !== undefined && row.cpc !== null ? String(row.cpc) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].avgWatchTime.push(row.average_time_on_video !== undefined && row.average_time_on_video !== null ? String(row.average_time_on_video) : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].videoName.push(row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '' ? String(row.adv_name).trim() : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].siteUrl.push(row.target_url !== undefined && row.target_url !== null && row.target_url !== '' ? String(row.target_url).trim() : '');
-          fbDataMapByBuyerGroup[buyerGroupKey][dateStr].budget.push('');
-        }
       }
 
       // По аккаунтам
@@ -772,7 +735,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       }
     }
 
-    // Функция для обработки сегмента - ОБНОВЛЕННАЯ С TIKTOK ДАННЫМИ
+    // Функция для обработки сегмента
     function processSegment(segmentName, resultMapBySegment, fbDataMapBySegment, segmentType) {
       let segmentMinDate = null, segmentMaxDate = null;
       
@@ -1123,47 +1086,53 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       prevDayGood = dayIsGood;
     }
 
-    // НОВАЯ СТРУКТУРА: Подготовка данных по Байер -> Группа
-    console.log('Processing buyer-group hierarchy data...');
-    const buyerGroupsData = {};
-    
-    // Создаем иерархическую структуру
-    Array.from(globalBuyers).forEach(buyerName => {
-      buyerGroupsData[buyerName] = {
-        buyerData: processSegment(buyerName, resultMapByBuyer, fbDataMapByBuyer, 'buyer'),
-        groups: {}
-      };
-      
-      // Для каждого байера находим его группы
-      if (buyerGroupsMap[buyerName]) {
-        Array.from(buyerGroupsMap[buyerName]).forEach(groupId => {
-          const groupName = groupIdToNameMap[groupId];
-          if (groupName) {
-            const buyerGroupKey = `${buyerName}:::${groupId}`;
-            
-            // Создаем данные для комбинации байер-группа
-            const buyerGroupData = processSegment(buyerGroupKey, resultMapByBuyerGroup, fbDataMapByBuyerGroup, 'buyer-group');
-            if (buyerGroupData) {
-              buyerGroupsData[buyerName].groups[groupName] = buyerGroupData;
-            }
-          }
-        });
+    // Подготовка данных по группам
+    console.log('Processing groups data...');
+    const groupsData = {};
+    const groupsArray = Array.from(globalGroups);
+    groupsArray.forEach(groupName => {
+      const groupData = processSegment(groupName, resultMapByGroup, fbDataMapByGroup, 'group');
+      if (groupData) {
+        groupsData[groupName] = groupData;
       }
     });
 
-    console.log('Buyer-group hierarchy created with TikTok metrics:', Object.keys(buyerGroupsData).length, 'buyers');
+    // Подготовка данных по байерам
+    console.log('Processing buyers data...');
+    const buyersData = {};
+    const buyersArray = Array.from(globalBuyers);
+    buyersArray.forEach(buyerName => {
+      const buyerData = processSegment(buyerName, resultMapByBuyer, fbDataMapByBuyer, 'buyer');
+      if (buyerData) {
+        buyersData[buyerName] = buyerData;
+      }
+    });
+
+    // Подготовка данных по аккаунтам
+    console.log('Processing accounts data...');
+    const accountsData = {};
+    const accountsArray = Array.from(globalAccounts);
+    accountsArray.forEach(accountName => {
+      const accountData = processSegment(accountName, resultMapByAccount, fbDataMapByAccount, 'account');
+      if (accountData) {
+        accountsData[accountName] = accountData;
+      }
+    });
 
     // Общие метрики
     const crValue = (totalClicksAll > 0) ? (totalLeadsAll / totalClicksAll) * 100 : 0;
     const crStr = crValue.toFixed(2).replace('.', ',') + '%';
 
-    console.log('Analysis completed successfully with enhanced TikTok metrics!');
+    console.log('Analysis completed successfully!');
     console.log('Total unique videos found:', globalVideos.size);
+    console.log('Video names:', Array.from(globalVideos));
 
     return {
       article: article,
       generalData: generalData,
-      buyerGroupsData: buyerGroupsData, // ДЕРЕВОВИДНАЯ СТРУКТУРА С TIKTOK МЕТРИКАМИ
+      groupsData: groupsData,
+      buyersData: buyersData,
+      accountsData: accountsData,
       generalMetrics: {
         activeDays: activeDays,
         daysInNorm: daysInNorm,
