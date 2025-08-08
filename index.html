@@ -417,7 +417,7 @@
       border-top: 1px solid #e2e8f0;
     }
 
-    /* Efficiency Zones Styling */
+    /* Efficiency Zones Styling - УЛУЧШЕННАЯ ВЕРСИЯ */
     .efficiency-zones {
       min-height: 240px;
     }
@@ -437,6 +437,20 @@
       margin-bottom: 12px;
       text-shadow: 0 1px 2px rgba(0,0,0,0.1);
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Цвета теперь читаются ДИНАМИЧЕСКИ из Google Sheets колонки AA */
+    .zone-percentage {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 20px;
+      border: 2px solid;
+      margin-bottom: 12px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      /* Цвета задаются динамически через style="" в JavaScript */
     }
     
     .zones-grid {
@@ -579,7 +593,7 @@
       white-space: pre-wrap;
     }
     
-    /* Специальные стили для ячеек с URL */
+    /* Специальные стили для ячеек с URL - УВЕЛИЧЕННЫЕ ДЛЯ ПОЛНЫХ АДРЕСОВ */
     .data-table td.url-cell {
       max-width: 400px;
       white-space: normal;
@@ -610,7 +624,7 @@
       background: #fafafa !important;
     }
     
-    /* Стили для кликабельных ссылок */
+    /* Стили для кликабельных ссылок - ПОЛНЫЕ АДРЕСА */
     .clickable-url {
       color: #1a73e8;
       text-decoration: underline;
@@ -652,501 +666,119 @@
       font-weight: 600;
     }
     
-    /* BUYER HIERARCHY STYLES */
-    .buyer-group-main-section {
-      margin-bottom: 48px;
+    /* Group Sections */
+    .group-section {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 3px solid #e2e8f0;
     }
     
-    .buyer-group-main-title {
-      font-size: 32px;
-      font-weight: 800;
-      color: #1e293b;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: linear-gradient(135deg, #059669, #0891b2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .buyer-group-main-subtitle {
-      color: #64748b;
-      font-size: 18px;
-      margin-bottom: 32px;
-      font-weight: 500;
-    }
-    
-    /* Buyer Header - Enhanced */
-    .buyer-header-enhanced {
-      background: linear-gradient(135deg, #059669 0%, #0891b2 50%, #0284c7 100%);
+    .group-header {
+      background: #1e293b;
       color: white;
-      border-radius: 20px;
-      padding: 32px;
-      margin-bottom: 32px;
-      box-shadow: 0 8px 32px rgba(5, 150, 105, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(30, 41, 59, 0.3);
       cursor: pointer;
-      transition: all 0.4s ease;
+      transition: all 0.3s ease;
       position: relative;
-      overflow: hidden;
     }
     
-    .buyer-header-enhanced::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
-      pointer-events: none;
+    .group-header:hover {
+      background: #334155;
+      box-shadow: 0 6px 24px rgba(30, 41, 59, 0.4);
     }
     
-    .buyer-header-enhanced:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 16px 48px rgba(5, 150, 105, 0.4);
-    }
-    
-    .buyer-info-grid {
-      display: grid;
-      grid-template-columns: 1fr auto;
+    .group-header-content {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 24px;
     }
     
-    .buyer-main-info h2 {
-      font-size: 28px;
-      font-weight: 800;
+    .group-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
       gap: 12px;
     }
     
-    .buyer-main-info p {
-      font-size: 16px;
-      opacity: 0.9;
-      margin: 0;
-    }
-    
-    .buyer-toggle-section {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    
-    .buyer-stats-preview {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 12px 20px;
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
+    .group-subtitle {
+      color: rgba(255, 255, 255, 0.8);
       font-size: 14px;
-      font-weight: 600;
-    }
-    
-    .buyer-toggle-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 20px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-    }
-    
-    .buyer-toggle-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.1);
-    }
-    
-    .buyer-toggle-btn.collapsed {
-      transform: rotate(0deg);
-    }
-    
-    .buyer-toggle-btn.collapsed:hover {
-      transform: scale(1.1);
-    }
-    
-    /* Buyer Content Area */
-    .buyer-content-area {
-      background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 20px;
-      padding: 0;
-      margin-bottom: 48px;
-      overflow: hidden;
-      transition: all 0.5s ease;
-      max-height: 10000px;
-      opacity: 1;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-    
-    .buyer-content-area.collapsed {
-      max-height: 0;
-      opacity: 0;
-      margin-bottom: 0;
-      padding: 0;
-    }
-    
-    /* Buyer Metrics Section */
-    .buyer-metrics-section {
-      padding: 32px;
-      border-bottom: 2px solid rgba(5, 150, 105, 0.1);
-    }
-    
-    .buyer-metrics-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .buyer-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-    
-    /* Buyer Chart Section */
-    .buyer-chart-section {
-      padding: 32px;
-      border-bottom: 2px solid rgba(5, 150, 105, 0.1);
-    }
-    
-    .buyer-chart-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .buyer-chart-container {
-      height: 400px;
-      position: relative;
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    }
-    
-    /* TikTok Details Section - NEW */
-    .buyer-tiktok-details-section {
-      padding: 32px;
-      border-bottom: 2px solid rgba(5, 150, 105, 0.1);
-    }
-    
-    .buyer-tiktok-details-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .tiktok-details-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .tiktok-detail-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border: 1px solid #f1f5f9;
-      transition: all 0.3s ease;
-    }
-    
-    .tiktok-detail-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-    }
-    
-    .tiktok-detail-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    
-    .tiktok-detail-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #059669, #0891b2);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 14px;
-    }
-    
-    .tiktok-detail-label {
-      font-size: 12px;
-      color: #64748b;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .tiktok-detail-value {
-      font-size: 18px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
-    
-    .tiktok-detail-subtitle {
-      font-size: 11px;
-      color: #94a3b8;
       font-weight: 500;
     }
     
-    /* Groups Section within Buyer */
-    .buyer-groups-section {
-      padding: 32px;
-    }
-    
-    .buyer-groups-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 28px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    /* Individual Group within Buyer */
-    .nested-group-enhanced {
-      background: white;
-      border-radius: 16px;
-      margin-bottom: 24px;
-      overflow: hidden;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      border: 1px solid rgba(5, 150, 105, 0.1);
-      transition: all 0.3s ease;
-    }
-    
-    .nested-group-enhanced:hover {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      transform: translateY(-2px);
-    }
-    
-    .nested-group-header-enhanced {
-      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-      color: white;
-      padding: 24px 32px;
+    .group-toggle {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
       transition: all 0.3s ease;
-      position: relative;
+    }
+    
+    .group-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    
+    .group-toggle.collapsed {
+      transform: rotate(-90deg);
+    }
+    
+    .group-content {
       overflow: hidden;
-    }
-    
-    .nested-group-header-enhanced::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(5,150,105,0.1) 0%, transparent 50%, rgba(5,150,105,0.05) 100%);
-      pointer-events: none;
-    }
-    
-    .nested-group-header-enhanced:hover {
-      background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    }
-    
-    .nested-group-info-grid {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: 24px;
-    }
-    
-    .nested-group-main-info h3 {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .nested-group-main-info p {
-      font-size: 14px;
-      opacity: 0.9;
-      margin: 0;
-    }
-    
-    .nested-group-content-enhanced {
-      transition: all 0.4s ease;
+      transition: max-height 0.5s ease, opacity 0.3s ease;
       max-height: 5000px;
       opacity: 1;
     }
     
-    .nested-group-content-enhanced.collapsed {
+    .group-content.collapsed {
       max-height: 0;
       opacity: 0;
+      margin-bottom: 0;
     }
-    
-    .nested-group-metrics {
-      padding: 24px 32px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    
-    .nested-group-metrics-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .nested-group-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 16px;
-    }
-    
-    .nested-group-chart {
-      padding: 24px 32px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    
-    .nested-group-chart-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .nested-group-chart-container {
-      height: 350px;
-      position: relative;
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 16px;
-    }
-    
-    /* TikTok Details for Groups - NEW */
-    .nested-group-tiktok-details {
-      padding: 24px 32px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    
-    .nested-group-tiktok-details-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .nested-group-tiktok-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-    
-    .nested-group-table {
-      padding: 24px 32px;
-    }
-    
-    .nested-group-table-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    /* Enhanced Metric Cards */
-    .metric-card-enhanced {
-      background: white;
+
+    /* Buyer Sections */
+    .buyer-header {
+      background: #059669;
+      color: white;
       border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border: 1px solid #f1f5f9;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(5, 150, 105, 0.3);
+      cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
-      overflow: hidden;
     }
     
-    .metric-card-enhanced::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: linear-gradient(to bottom, #059669, #0891b2);
+    .buyer-header:hover {
+      background: #047857;
+      box-shadow: 0 6px 24px rgba(5, 150, 105, 0.4);
     }
-    
-    .metric-card-enhanced:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-    }
-    
-    .metric-card-enhanced .metric-header {
-      margin-bottom: 12px;
-    }
-    
-    .metric-card-enhanced .metric-label {
-      font-size: 12px;
-      color: #64748b;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .metric-card-enhanced .metric-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #059669, #0891b2);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+
+    /* Account Sections */
+    .account-header {
+      background: #7c3aed;
       color: white;
-      font-size: 14px;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
     }
     
-    .metric-card-enhanced .metric-value {
-      font-size: 24px;
-      font-weight: 800;
-      color: #1e293b;
-      margin-bottom: 6px;
-    }
-    
-    .metric-card-enhanced .metric-subtitle {
-      font-size: 11px;
-      color: #94a3b8;
-      font-weight: 500;
+    .account-header:hover {
+      background: #6d28d9;
+      box-shadow: 0 6px 24px rgba(124, 58, 237, 0.4);
     }
     
     /* Стили для всплывающих подсказок (Tooltips) */
@@ -1249,7 +881,6 @@
     .tooltip-container:nth-last-child(2):hover .tooltip {
       transform: translateX(0) translateY(-8px);
     }
-
     @media (max-width: 1024px) {
       .sidebar {
         transform: translateX(-100%);
@@ -1273,14 +904,6 @@
       .controls-grid {
         grid-template-columns: 1fr;
         gap: 16px;
-      }
-      
-      .buyer-metrics-grid, .nested-group-metrics-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-      
-      .tiktok-details-grid, .nested-group-tiktok-grid {
-        grid-template-columns: repeat(2, 1fr);
       }
     }
     
@@ -1306,14 +929,6 @@
       .metrics-grid.single-row {
         grid-template-columns: repeat(2, 1fr);
       }
-      
-      .buyer-metrics-grid, .nested-group-metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      
-      .tiktok-details-grid, .nested-group-tiktok-grid {
-        grid-template-columns: 1fr;
-      }
     }
 
     @media (max-width: 480px) {
@@ -1322,10 +937,6 @@
       }
 
       .metrics-grid.single-row {
-        grid-template-columns: 1fr;
-      }
-      
-      .buyer-metrics-grid, .nested-group-metrics-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -1428,8 +1039,14 @@
         </div>
       </div>
       
-      <!-- Buyer-Group Hierarchy -->
-      <div id="buyerGroupsContainer"></div>
+      <!-- Groups -->
+      <div id="groupsContainer"></div>
+      
+      <!-- Buyers -->
+      <div id="buyersContainer"></div>
+      
+      <!-- Accounts -->
+      <div id="accountsContainer"></div>
     </div>
   </div>
 
@@ -1464,7 +1081,7 @@
       }).join('\n');
     }
     
-    // Функция для создания кликабельных ссылок
+    // Функция для создания кликабельных ссылок - ПОКАЗЫВАЕМ ПОЛНЫЕ АДРЕСА
     function makeUrlsClickable(text) {
       if (!text || text.trim() === '') return '';
       
@@ -1472,88 +1089,17 @@
       return urls.map(url => {
         const cleanUrl = url.trim();
         if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+          // Показываем ПОЛНЫЙ адрес, не сокращаем
           return `<a href="${cleanUrl}" target="_blank" class="clickable-url" title="${cleanUrl}">${cleanUrl}</a>`;
         }
         return cleanUrl;
       }).join('<br>');
     }
     
-    // Функция для получения среднего значения массива строк
-    function getAverageFromStringArray(strArray) {
-      if (!Array.isArray(strArray) || strArray.length === 0) return 'Нет данных';
-      
-      const numbers = strArray
-        .filter(item => item && item.trim() !== '')
-        .map(item => {
-          const num = parseFloat(String(item).replace(',', '.'));
-          return isNaN(num) ? null : num;
-        })
-        .filter(num => num !== null);
-      
-      if (numbers.length === 0) return 'Нет данных';
-      
-      const average = numbers.reduce((sum, num) => sum + num, 0) / numbers.length;
-      return average.toFixed(2).replace('.', ',');
-    }
-    
-    // Функция для получения общего количества из массива строк
-    function getTotalFromStringArray(strArray) {
-      if (!Array.isArray(strArray) || strArray.length === 0) return 'Нет данных';
-      
-      const numbers = strArray
-        .filter(item => item && item.trim() !== '')
-        .map(item => {
-          const num = parseInt(String(item).replace(',', '.'));
-          return isNaN(num) ? null : num;
-        })
-        .filter(num => num !== null);
-      
-      if (numbers.length === 0) return 'Нет данных';
-      
-      const total = numbers.reduce((sum, num) => sum + num, 0);
-      return total.toString();
-    }
-    
-    // Функция для получения уникальных значений из массива строк
-    function getUniqueFromStringArray(strArray) {
-      if (!Array.isArray(strArray) || strArray.length === 0) return 'Нет данных';
-      
-      const allItems = [];
-      strArray.forEach(item => {
-        if (item && item.trim() !== '') {
-          const subItems = String(item).split('\n').filter(subItem => subItem.trim() !== '');
-          allItems.push(...subItems);
-        }
-      });
-      
-      const uniqueItems = [...new Set(allItems.map(item => item.trim()))];
-      return uniqueItems.length > 0 ? uniqueItems.length.toString() : 'Нет данных';
-    }
-    
-    // Функция для сворачивания/разворачивания байеров в иерархии
-    function toggleBuyerGroup(buyerId) {
-      const content = document.getElementById(buyerId + '_content');
-      const toggle = event.currentTarget.querySelector('.buyer-toggle-btn i');
-      
-      if (content.classList.contains('collapsed')) {
-        // Разворачиваем
-        content.classList.remove('collapsed');
-        toggle.classList.remove('fa-chevron-right');
-        toggle.classList.add('fa-chevron-down');
-        toggle.parentElement.classList.remove('collapsed');
-      } else {
-        // Сворачиваем
-        content.classList.add('collapsed');
-        toggle.classList.remove('fa-chevron-down');
-        toggle.classList.add('fa-chevron-right');
-        toggle.parentElement.classList.add('collapsed');
-      }
-    }
-    
-    // Функция для сворачивания/разворачивания вложенных групп
-    function toggleNestedGroup(groupId) {
+    // Функция для сворачивания/разворачивания групп
+    function toggleGroup(groupId) {
       const content = document.getElementById(groupId + '_content');
-      const toggle = event.currentTarget.querySelector('.buyer-toggle-btn i');
+      const toggle = event.currentTarget.querySelector('.group-toggle i');
       
       if (content.classList.contains('collapsed')) {
         // Разворачиваем
@@ -1570,9 +1116,8 @@
       }
     }
     
-    // Делаем функции глобально доступными
-    window.toggleBuyerGroup = toggleBuyerGroup;
-    window.toggleNestedGroup = toggleNestedGroup;
+    // Делаем функцию глобально доступной
+    window.toggleGroup = toggleGroup;
     
     function buildChart() {
       const article = document.getElementById('articleInput').value.trim();
@@ -1663,8 +1208,14 @@
       // Общая таблица
       displayGeneralTable(data.generalData);
       
-      // Деревовидная структура Байер → Группа
-      displayBuyerGroups(data.article, data.buyerGroupsData || {});
+      // Группы
+      displayGroups(data.article, data.groupsData || {});
+      
+      // Байеры
+      displayBuyers(data.article, data.buyersData || {});
+      
+      // Аккаунты
+      displayAccounts(data.article, data.accountsData || {});
       
       showResults();
     }
@@ -2133,195 +1684,65 @@
       table.innerHTML = html;
     }
     
-    function displayBuyerGroups(article, buyerGroupsData) {
-      console.log('🌲 Отображаем деревовидную структуру с TikTok данными:', buyerGroupsData);
+    function displayGroups(article, groupsData) {
+      console.log('👥 Отображаем группы:', groupsData);
       
-      const container = document.getElementById('buyerGroupsContainer');
+      const container = document.getElementById('groupsContainer');
       let html = '';
       
-      if (Object.keys(buyerGroupsData).length > 0) {
+      if (Object.keys(groupsData).length > 0) {
         html += `
-          <div class="buyer-group-main-section">
-            <h2 class="buyer-group-main-title">
-              <i class="fas fa-sitemap"></i>
-              Детальная аналитика по медиабайерам
+          <div class="group-section">
+            <h2 class="section-title">
+              <i class="fas fa-layer-group"></i>
+              Аналитика по группам объявлений
             </h2>
-            <div class="buyer-group-main-subtitle">
-              Полная иерархическая структура: Байер → Группы объявлений с детальными метриками TikTok, графиками и таблицами
-            </div>
           </div>
         `;
         
-        Object.keys(buyerGroupsData).forEach(buyerName => {
-          const buyerData = buyerGroupsData[buyerName];
-          const buyerId = `enhanced_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          const groupsCount = Object.keys(buyerData.groups || {}).length;
-          const buyerChartId = `buyer_chart_${buyerId}`;
+        Object.keys(groupsData).forEach(groupName => {
+          const groupData = groupsData[groupName];
+          const chartId = `chart_group_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const tableId = `table_group_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
           
           html += `
-            <div class="buyer-group-section">
-              <!-- BUYER HEADER -->
-              <div class="buyer-header-enhanced" onclick="toggleBuyerGroup('${buyerId}')">
-                <div class="buyer-info-grid">
-                  <div class="buyer-main-info">
-                    <h2>
-                      <i class="fas fa-user-tie"></i>
-                      ${escapeHtml(buyerName)}
-                    </h2>
-                    <p>Медиабайер • ${groupsCount} ${groupsCount === 1 ? 'группа' : groupsCount < 5 ? 'группы' : 'групп'} объявлений</p>
+            <div class="group-section">
+              <div class="group-header" onclick="toggleGroup('group_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}')">
+                <div class="group-header-content">
+                  <div>
+                    <div class="group-title">
+                      <i class="fas fa-folder"></i>
+                      ${escapeHtml(groupName)}
+                    </div>
+                    <div class="group-subtitle">Детальная аналитика по группе объявлений</div>
                   </div>
-                  <div class="buyer-toggle-section">
-                    ${buyerData.buyerData ? `
-                      <div class="buyer-stats-preview">
-                        ${buyerData.buyerData.metrics.activeDays} дней • CR ${buyerData.buyerData.metrics.cr}
-                      </div>
-                    ` : ''}
-                    <button class="buyer-toggle-btn collapsed" type="button">
-                      <i class="fas fa-chevron-right"></i>
-                    </button>
-                  </div>
+                  <button class="group-toggle collapsed" type="button">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
                 </div>
               </div>
               
-              <!-- BUYER CONTENT AREA - СВЕРНУТО ПО УМОЛЧАНИЮ -->
-              <div class="buyer-content-area collapsed" id="${buyerId}_content">
+              <div class="group-content collapsed" id="group_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}_content">
+                <div class="metrics-grid single-row">
+                  ${generateSegmentMetrics(groupData.metrics)}
+                </div>
                 
-                <!-- BUYER METRICS SECTION -->
-                ${buyerData.buyerData ? `
-                  <div class="buyer-metrics-section">
-                    <h3 class="buyer-metrics-title">
-                      <i class="fas fa-chart-pie"></i>
-                      Ключевые показатели байера
-                    </h3>
-                    <div class="buyer-metrics-grid">
-                      ${generateEnhancedBuyerMetrics(buyerData.buyerData.metrics)}
-                    </div>
+                <div class="chart-section">
+                  <div class="chart-header">
+                    <div class="chart-title">📈 Динамика группы: ${escapeHtml(groupName)}</div>
                   </div>
-                  
-                  <!-- BUYER TIKTOK DETAILS SECTION - NEW -->
-                  <div class="buyer-tiktok-details-section">
-                    <h3 class="buyer-tiktok-details-title">
-                      <i class="fab fa-tiktok"></i>
-                      Детали TikTok рекламы
-                    </h3>
-                    <div class="tiktok-details-grid">
-                      ${generateTikTokDetails(buyerData.buyerData.data)}
-                    </div>
+                  <div class="chart-container">
+                    <canvas id="${chartId}"></canvas>
                   </div>
-                  
-                  <!-- BUYER CHART SECTION -->
-                  <div class="buyer-chart-section">
-                    <h3 class="buyer-chart-title">
-                      <i class="fas fa-chart-line"></i>
-                      График динамики байера
-                    </h3>
-                    <div class="buyer-chart-container">
-                      <canvas id="${buyerChartId}"></canvas>
-                    </div>
-                  </div>
-                  
-                  <!-- BUYER TABLE SECTION -->
-                  <div class="buyer-chart-section">
-                    <h3 class="buyer-chart-title">
-                      <i class="fas fa-table"></i>
-                      Детальные данные байера
-                    </h3>
-                    <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-                      <div class="table-container">
-                        <table class="data-table" id="buyer_table_${buyerId}"></table>
-                      </div>
-                    </div>
-                  </div>
-                ` : ''}
+                </div>
                 
-                <!-- BUYER GROUPS SECTION -->
-                <div class="buyer-groups-section">
-                  <h3 class="buyer-groups-title">
-                    <i class="fas fa-folder-tree"></i>
-                    Группы объявлений (${groupsCount})
-                  </h3>
-                  
-                  ${Object.keys(buyerData.groups || {}).map(groupName => {
-                    const groupData = buyerData.groups[groupName];
-                    const nestedGroupId = `enhanced_group_${buyerId}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                    const chartId = `chart_${nestedGroupId}`;
-                    const tableId = `table_${nestedGroupId}`;
-                    
-                    return `
-                      <div class="nested-group-enhanced">
-                        <!-- GROUP HEADER -->
-                        <div class="nested-group-header-enhanced" onclick="toggleNestedGroup('${nestedGroupId}')">
-                          <div class="nested-group-info-grid">
-                            <div class="nested-group-main-info">
-                              <h3>
-                                <i class="fas fa-folder"></i>
-                                ${escapeHtml(groupName)}
-                              </h3>
-                              <p>Группа объявлений • ${groupData.metrics.activeDays} активных дней • CR ${groupData.metrics.cr}</p>
-                            </div>
-                            <div class="buyer-toggle-section">
-                              <div class="buyer-stats-preview">
-                                ${groupData.metrics.videos} видео • ${groupData.metrics.sites} лендингов
-                              </div>
-                              <button class="buyer-toggle-btn collapsed" type="button">
-                                <i class="fas fa-chevron-right"></i>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <!-- GROUP CONTENT - СВЕРНУТО ПО УМОЛЧАНИЮ -->
-                        <div class="nested-group-content-enhanced collapsed" id="${nestedGroupId}_content">
-                          
-                          <!-- GROUP METRICS -->
-                          <div class="nested-group-metrics">
-                            <h4 class="nested-group-metrics-title">
-                              <i class="fas fa-chart-bar"></i>
-                              Метрики группы
-                            </h4>
-                            <div class="nested-group-metrics-grid">
-                              ${generateEnhancedGroupMetrics(groupData.metrics)}
-                            </div>
-                          </div>
-                          
-                          <!-- GROUP TIKTOK DETAILS - NEW -->
-                          <div class="nested-group-tiktok-details">
-                            <h4 class="nested-group-tiktok-details-title">
-                              <i class="fab fa-tiktok"></i>
-                              Детали TikTok рекламы группы
-                            </h4>
-                            <div class="nested-group-tiktok-grid">
-                              ${generateTikTokDetailsGroup(groupData.data)}
-                            </div>
-                          </div>
-                          
-                          <!-- GROUP CHART -->
-                          <div class="nested-group-chart">
-                            <h4 class="nested-group-chart-title">
-                              <i class="fas fa-chart-area"></i>
-                              График динамики
-                            </h4>
-                            <div class="nested-group-chart-container">
-                              <canvas id="${chartId}"></canvas>
-                            </div>
-                          </div>
-                          
-                          <!-- GROUP TABLE -->
-                          <div class="nested-group-table">
-                            <h4 class="nested-group-table-title">
-                              <i class="fas fa-table"></i>
-                              Детальные данные
-                            </h4>
-                            <div class="table-container">
-                              <table class="data-table" id="${tableId}"></table>
-                            </div>
-                          </div>
-                          
-                        </div>
-                      </div>
-                    `;
-                  }).join('')}
-                  
+                <div class="table-section">
+                  <div class="chart-header">
+                    <div class="chart-title">Детальные данные группы</div>
+                  </div>
+                  <div class="table-container">
+                    <table class="data-table" id="${tableId}"></table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2330,252 +1751,185 @@
         
         container.innerHTML = html;
         
-        // Создаем графики и таблицы
-        Object.keys(buyerGroupsData).forEach(buyerName => {
-          const buyerData = buyerGroupsData[buyerName];
-          const buyerId = `enhanced_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-          const buyerChartId = `buyer_chart_${buyerId}`;
-          const buyerTableId = `buyer_table_${buyerId}`;
+        // Создаем таблицы и графики для групп
+        Object.keys(groupsData).forEach(groupName => {
+          const groupData = groupsData[groupName];
+          const chartId = `chart_group_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const tableId = `table_group_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
           
-          // График И ТАБЛИЦА для байера
-          if (buyerData.buyerData) {
-            displaySegmentChart(buyerChartId, article, buyerName, buyerData.buyerData.data);
-            displaySegmentTable(buyerTableId, buyerData.buyerData.data);
-          }
-          
-          // Графики и таблицы для групп
-          Object.keys(buyerData.groups || {}).forEach(groupName => {
-            const groupData = buyerData.groups[groupName];
-            const nestedGroupId = `enhanced_group_${buyerId}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-            const chartId = `chart_${nestedGroupId}`;
-            const tableId = `table_${nestedGroupId}`;
-            
-            displaySegmentTable(tableId, groupData.data);
-            displaySegmentChart(chartId, article, `${buyerName} → ${groupName}`, groupData.data);
-          });
+          displaySegmentTable(tableId, groupData.data);
+          displaySegmentChart(chartId, article, groupName, groupData.data);
         });
       } else {
-        container.innerHTML = `
-          <div class="buyer-group-main-section">
-            <h2 class="buyer-group-main-title">
-              <i class="fas fa-sitemap"></i>
-              Детальная аналитика по медиабайерам
+        container.innerHTML = '';
+      }
+    }
+
+    function displayBuyers(article, buyersData) {
+      console.log('👤 Отображаем байеров:', buyersData);
+      
+      const container = document.getElementById('buyersContainer');
+      let html = '';
+      
+      if (Object.keys(buyersData).length > 0) {
+        html += `
+          <div class="group-section" style="border-top-color: #059669;">
+            <h2 class="section-title">
+              <i class="fas fa-user-tie"></i>
+              Аналитика по медиабайерам
             </h2>
-            <div class="buyer-group-main-subtitle">
-              Данные не найдены для выбранного артикула и периода
-            </div>
           </div>
         `;
+        
+        Object.keys(buyersData).forEach(buyerName => {
+          const buyerData = buyersData[buyerName];
+          const chartId = `chart_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const tableId = `table_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
+          html += `
+            <div class="group-section">
+              <div class="buyer-header" onclick="toggleGroup('buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}')">
+                <div class="group-header-content">
+                  <div>
+                    <div class="group-title">
+                      <i class="fas fa-user-tie"></i>
+                      ${escapeHtml(buyerName)}
+                    </div>
+                    <div class="group-subtitle">Детальная аналитика по медиабайеру</div>
+                  </div>
+                  <button class="group-toggle collapsed" type="button">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="group-content collapsed" id="buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}_content">
+                <div class="metrics-grid single-row">
+                  ${generateSegmentMetrics(buyerData.metrics)}
+                </div>
+                
+                <div class="chart-section">
+                  <div class="chart-header">
+                    <div class="chart-title">👤 Динамика байера: ${escapeHtml(buyerName)}</div>
+                  </div>
+                  <div class="chart-container">
+                    <canvas id="${chartId}"></canvas>
+                  </div>
+                </div>
+                
+                <div class="table-section">
+                  <div class="chart-header">
+                    <div class="chart-title">Детальные данные байера</div>
+                  </div>
+                  <div class="table-container">
+                    <table class="data-table" id="${tableId}"></table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Создаем таблицы и графики для байеров
+        Object.keys(buyersData).forEach(buyerName => {
+          const buyerData = buyersData[buyerName];
+          const chartId = `chart_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const tableId = `table_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
+          displaySegmentTable(tableId, buyerData.data);
+          displaySegmentChart(chartId, article, buyerName, buyerData.data);
+        });
+      } else {
+        container.innerHTML = '';
+      }
+    }
+
+    function displayAccounts(article, accountsData) {
+      console.log('🔑 Отображаем аккаунты:', accountsData);
+      
+      const container = document.getElementById('accountsContainer');
+      let html = '';
+      
+      if (Object.keys(accountsData).length > 0) {
+        html += `
+          <div class="group-section" style="border-top-color: #7c3aed;">
+            <h2 class="section-title">
+              <i class="fas fa-users"></i>
+              Аналитика по рекламным аккаунтам
+            </h2>
+          </div>
+        `;
+        
+        Object.keys(accountsData).forEach(accountName => {
+          const accountData = accountsData[accountName];
+          const chartId = `chart_account_${accountName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const tableId = `table_account_${accountName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
+          html += `
+            <div class="group-section">
+              <div class="account-header" onclick="toggleGroup('account_${accountName.replace(/[^a-zA-Z0-9]/g, '_')}')">
+                <div class="group-header-content">
+                  <div>
+                    <div class="group-title">
+                      <i class="fas fa-users"></i>
+                      ${escapeHtml(accountName)}
+                    </div>
+                    <div class="group-subtitle">Детальная аналитика по рекламному аккаунту</div>
+                  </div>
+                  <button class="group-toggle collapsed" type="button">
+                    <i class="fas fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="group-content collapsed" id="account_${accountName.replace(/[^a-zA-Z0-9]/g, '_')}_content">
+                <div class="metrics-grid single-row">
+                  ${generateSegmentMetrics(accountData.metrics)}
+                </div>
+                
+                <div class="chart-section">
+                  <div class="chart-header">
+                    <div class="chart-title">🔑 Динамика аккаунта: ${escapeHtml(accountName)}</div>
+                  </div>
+                  <div class="chart-container">
+                    <canvas id="${chartId}"></canvas>
+                  </div>
+                </div>
+                
+                <div class="table-section">
+                  <div class="chart-header">
+                    <div class="chart-title">Детальные данные аккаунта</div>
+                  </div>
+                  <div class="table-container">
+                    <table class="data-table" id="${tableId}"></table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Создаем таблицы и графики для аккаунтов
+        Object.keys(accountsData).forEach(accountName => {
+          const accountData = accountsData[accountName];
+          const chartId = `chart_account_${accountName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const tableId = `table_account_${accountName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          
+          displaySegmentTable(tableId, accountData.data);
+          displaySegmentChart(chartId, article, accountName, accountData.data);
+        });
+      } else {
+        container.innerHTML = '';
       }
     }
     
-    // Функция для генерации TikTok деталей для байера
-    function generateTikTokDetails(data) {
-      if (!data) return '';
-      
-      // Собираем все значения для каждой метрики
-      const allFreq = [], allCtr = [], allCpm = [], allLinkClicks = [], allCpc = [], allAvgWatchTime = [];
-      const allVideoNames = [], allSiteUrls = [], allBudgets = [];
-      
-      data.freq?.forEach(item => { if (item) allFreq.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.ctr?.forEach(item => { if (item) allCtr.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.cpm?.forEach(item => { if (item) allCpm.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.linkClicks?.forEach(item => { if (item) allLinkClicks.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.cpc?.forEach(item => { if (item) allCpc.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.avgWatchTime?.forEach(item => { if (item) allAvgWatchTime.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.videoName?.forEach(item => { if (item) allVideoNames.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.siteUrl?.forEach(item => { if (item) allSiteUrls.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.budget?.forEach(item => { if (item) allBudgets.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      
+    function generateSegmentMetrics(metrics) {
       return `
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-mouse-pointer"></i></div>
-            <div class="tiktok-detail-label">Средняя частота</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allFreq)}</div>
-          <div class="tiktok-detail-subtitle">показов на пользователя</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-percentage"></i></div>
-            <div class="tiktok-detail-label">Средний CTR</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allCtr)}%</div>
-          <div class="tiktok-detail-subtitle">клики к показам</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-dollar-sign"></i></div>
-            <div class="tiktok-detail-label">Средний CPM</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allCpm)}</div>
-          <div class="tiktok-detail-subtitle">за 1000 показов</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-hand-pointer"></i></div>
-            <div class="tiktok-detail-label">Всего кликов</div>
-          </div>
-          <div class="tiktok-detail-value">${getTotalFromStringArray(allLinkClicks)}</div>
-          <div class="tiktok-detail-subtitle">переходов на сайт</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-coins"></i></div>
-            <div class="tiktok-detail-label">Средний CPC</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allCpc)}</div>
-          <div class="tiktok-detail-subtitle">за клик</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-play"></i></div>
-            <div class="tiktok-detail-label">Среднее время просмотра</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allAvgWatchTime)}с</div>
-          <div class="tiktok-detail-subtitle">просмотра видео</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-video"></i></div>
-            <div class="tiktok-detail-label">Уникальных видео</div>
-          </div>
-          <div class="tiktok-detail-value">${getUniqueFromStringArray(allVideoNames)}</div>
-          <div class="tiktok-detail-subtitle">креативов</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-globe"></i></div>
-            <div class="tiktok-detail-label">Уникальных лендингов</div>
-          </div>
-          <div class="tiktok-detail-value">${getUniqueFromStringArray(allSiteUrls)}</div>
-          <div class="tiktok-detail-subtitle">посадочных страниц</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-wallet"></i></div>
-            <div class="tiktok-detail-label">Общий бюджет</div>
-          </div>
-          <div class="tiktok-detail-value">${getTotalFromStringArray(allBudgets)}</div>
-          <div class="tiktok-detail-subtitle">выделенных средств</div>
-        </div>
-      `;
-    }
-    
-    // Функция для генерации TikTok деталей для группы
-    function generateTikTokDetailsGroup(data) {
-      if (!data) return '';
-      
-      // Собираем все значения для каждой метрики
-      const allFreq = [], allCtr = [], allCpm = [], allLinkClicks = [], allCpc = [], allAvgWatchTime = [];
-      const allVideoNames = [], allSiteUrls = [], allBudgets = [];
-      
-      data.freq?.forEach(item => { if (item) allFreq.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.ctr?.forEach(item => { if (item) allCtr.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.cpm?.forEach(item => { if (item) allCpm.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.linkClicks?.forEach(item => { if (item) allLinkClicks.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.cpc?.forEach(item => { if (item) allCpc.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.avgWatchTime?.forEach(item => { if (item) allAvgWatchTime.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.videoName?.forEach(item => { if (item) allVideoNames.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.siteUrl?.forEach(item => { if (item) allSiteUrls.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      data.budget?.forEach(item => { if (item) allBudgets.push(...String(item).split('\n').filter(v => v.trim() !== '')); });
-      
-      return `
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-mouse-pointer"></i></div>
-            <div class="tiktok-detail-label">Средняя частота</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allFreq)}</div>
-          <div class="tiktok-detail-subtitle">показов на пользователя</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-percentage"></i></div>
-            <div class="tiktok-detail-label">Средний CTR</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allCtr)}%</div>
-          <div class="tiktok-detail-subtitle">клики к показам</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-dollar-sign"></i></div>
-            <div class="tiktok-detail-label">Средний CPM</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allCpm)}</div>
-          <div class="tiktok-detail-subtitle">за 1000 показов</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-hand-pointer"></i></div>
-            <div class="tiktok-detail-label">Всего кликов</div>
-          </div>
-          <div class="tiktok-detail-value">${getTotalFromStringArray(allLinkClicks)}</div>
-          <div class="tiktok-detail-subtitle">переходов на сайт</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-coins"></i></div>
-            <div class="tiktok-detail-label">Средний CPC</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allCpc)}</div>
-          <div class="tiktok-detail-subtitle">за клик</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-play"></i></div>
-            <div class="tiktok-detail-label">Среднее время просмотра</div>
-          </div>
-          <div class="tiktok-detail-value">${getAverageFromStringArray(allAvgWatchTime)}с</div>
-          <div class="tiktok-detail-subtitle">просмотра видео</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-video"></i></div>
-            <div class="tiktok-detail-label">Уникальных видео</div>
-          </div>
-          <div class="tiktok-detail-value">${getUniqueFromStringArray(allVideoNames)}</div>
-          <div class="tiktok-detail-subtitle">креативов</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-globe"></i></div>
-            <div class="tiktok-detail-label">Уникальных лендингов</div>
-          </div>
-          <div class="tiktok-detail-value">${getUniqueFromStringArray(allSiteUrls)}</div>
-          <div class="tiktok-detail-subtitle">посадочных страниц</div>
-        </div>
-        
-        <div class="tiktok-detail-card">
-          <div class="tiktok-detail-header">
-            <div class="tiktok-detail-icon"><i class="fas fa-wallet"></i></div>
-            <div class="tiktok-detail-label">Общий бюджет</div>
-          </div>
-          <div class="tiktok-detail-value">${getTotalFromStringArray(allBudgets)}</div>
-          <div class="tiktok-detail-subtitle">выделенных средств</div>
-        </div>
-      `;
-    }
-    
-    function generateEnhancedBuyerMetrics(metrics) {
-      return `
-        <div class="metric-card-enhanced">
+        <div class="metric-card">
           <div class="metric-header">
             <div class="metric-label">Активных дней</div>
             <div class="metric-icon"><i class="fas fa-calendar-day"></i></div>
@@ -2584,7 +1938,7 @@
           <div class="metric-subtitle">дней с активностью</div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card">
           <div class="metric-header">
             <div class="metric-label">Дней в норме</div>
             <div class="metric-icon"><i class="fas fa-check-circle"></i></div>
@@ -2593,25 +1947,25 @@
           <div class="metric-subtitle">соответствует CPL</div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card">
           <div class="metric-header">
-            <div class="metric-label">Превышений</div>
+            <div class="metric-label">Дней ниже допустимой</div>
             <div class="metric-icon"><i class="fas fa-exclamation-triangle"></i></div>
           </div>
           <div class="metric-value">${metrics.daysBelowAllowed}</div>
-          <div class="metric-subtitle">дней превышения</div>
+          <div class="metric-subtitle">превышение CPL</div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card">
           <div class="metric-header">
             <div class="metric-label">Конверсия</div>
             <div class="metric-icon"><i class="fas fa-percentage"></i></div>
           </div>
           <div class="metric-value">${metrics.cr}</div>
-          <div class="metric-subtitle">средний CR</div>
+          <div class="metric-subtitle">CR сегмента</div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card">
           <div class="metric-header">
             <div class="metric-label">Видео</div>
             <div class="metric-icon"><i class="fas fa-video"></i></div>
@@ -2620,71 +1974,13 @@
           <div class="metric-subtitle">уникальных</div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card">
           <div class="metric-header">
             <div class="metric-label">Лендинги</div>
             <div class="metric-icon"><i class="fas fa-globe"></i></div>
           </div>
           <div class="metric-value">${metrics.sites}</div>
           <div class="metric-subtitle">посадочных страниц</div>
-        </div>
-      `;
-    }
-    
-    function generateEnhancedGroupMetrics(metrics) {
-      return `
-        <div class="metric-card-enhanced">
-          <div class="metric-header">
-            <div class="metric-label">Активных дней</div>
-            <div class="metric-icon"><i class="fas fa-calendar-day"></i></div>
-          </div>
-          <div class="metric-value">${metrics.activeDays}</div>
-          <div class="metric-subtitle">дней с активностью</div>
-        </div>
-        
-        <div class="metric-card-enhanced">
-          <div class="metric-header">
-            <div class="metric-label">Дней в норме</div>
-            <div class="metric-icon"><i class="fas fa-check-circle"></i></div>
-          </div>
-          <div class="metric-value">${metrics.daysInNorm}</div>
-          <div class="metric-subtitle">соответствует CPL</div>
-        </div>
-        
-        <div class="metric-card-enhanced">
-          <div class="metric-header">
-            <div class="metric-label">Превышений</div>
-            <div class="metric-icon"><i class="fas fa-exclamation-triangle"></i></div>
-          </div>
-          <div class="metric-value">${metrics.daysBelowAllowed}</div>
-          <div class="metric-subtitle">дней превышения</div>
-        </div>
-        
-        <div class="metric-card-enhanced">
-          <div class="metric-header">
-            <div class="metric-label">Конверсия</div>
-            <div class="metric-icon"><i class="fas fa-percentage"></i></div>
-          </div>
-          <div class="metric-value">${metrics.cr}</div>
-          <div class="metric-subtitle">CR группы</div>
-        </div>
-        
-        <div class="metric-card-enhanced">
-          <div class="metric-header">
-            <div class="metric-label">Видео</div>
-            <div class="metric-icon"><i class="fas fa-video"></i></div>
-          </div>
-          <div class="metric-value">${metrics.videos}</div>
-          <div class="metric-subtitle">креативов</div>
-        </div>
-        
-        <div class="metric-card-enhanced">
-          <div class="metric-header">
-            <div class="metric-label">Лендинги</div>
-            <div class="metric-icon"><i class="fas fa-globe"></i></div>
-          </div>
-          <div class="metric-value">${metrics.sites}</div>
-          <div class="metric-subtitle">страниц</div>
         </div>
       `;
     }
@@ -2905,9 +2201,9 @@
                   const label = context.dataset.label;
                   
                   if (label.includes('CPL')) {
-                    return `${label}: ${value.toFixed(2)}`;
+                    return `${label}: $${value.toFixed(2)}`;
                   } else if (label.includes('Расход')) {
-                    return `${label}: ${value.toFixed(0)}`;
+                    return `${label}: $${value.toFixed(0)}`;
                   } else if (label.includes('Лиды')) {
                     return `${label}: ${value} шт`;
                   }
@@ -2942,7 +2238,7 @@
               ticks: {
                 color: '#64748b',
                 callback: function(value) {
-                  return ' + value.toFixed(1);
+                  return '$' + value.toFixed(1);
                 }
               }
             },
