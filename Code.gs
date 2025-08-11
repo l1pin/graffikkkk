@@ -497,11 +497,15 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     const resultMapByGroup = {};
     const resultMapByBuyer = {};
     const resultMapByAccount = {};
+    // НОВАЯ СТРУКТУРА: Байер -> Группа объявлений
+    const resultMapByBuyerGroup = {};
     const fbDataMap = {};
     const fbDataMapByGroupId = {};
     const fbDataMapByGroup = {};
     const fbDataMapByBuyer = {};
     const fbDataMapByAccount = {};
+    // НОВАЯ СТРУКТУРА: Байер -> Группа объявлений
+    const fbDataMapByBuyerGroup = {};
     const groupsByDate = {};
     const buyersByDate = {};
     const accountsByDate = {};
@@ -509,6 +513,8 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     const globalBuyers = new Set();
     const globalAccounts = new Set();
     const groupIdToNameMap = {};
+    // НОВАЯ СТРУКТУРА: Отслеживание групп по байерам
+    const buyerGroupsMap = {}; // { buyer: Set(groups) }
     let totalLeadsAll = 0, totalClicksAll = 0;
     const globalVideos = new Set(), globalSites = new Set();
 
@@ -546,6 +552,19 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         
         if (!buyersByDate[dateStr]) buyersByDate[dateStr] = [];
         buyersByDate[dateStr].push(campaignInfo.buyer);
+        
+        // НОВАЯ СТРУКТУРА: Байер -> Группа (по ID группы)
+        if (groupId) {
+          const buyerGroupKey = `${campaignInfo.buyer}:::${groupId}`;
+          if (!resultMapByBuyerGroup[buyerGroupKey]) resultMapByBuyerGroup[buyerGroupKey] = {};
+          if (!resultMapByBuyerGroup[buyerGroupKey][dateStr]) resultMapByBuyerGroup[buyerGroupKey][dateStr] = { leads: 0, spend: 0 };
+          resultMapByBuyerGroup[buyerGroupKey][dateStr].leads += leads;
+          resultMapByBuyerGroup[buyerGroupKey][dateStr].spend += spend;
+          
+          // Отслеживаем группы для каждого байера
+          if (!buyerGroupsMap[campaignInfo.buyer]) buyerGroupsMap[campaignInfo.buyer] = new Set();
+          buyerGroupsMap[campaignInfo.buyer].add(groupId);
+        }
       }
 
       // По аккаунтам
@@ -1086,38 +1105,35 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       prevDayGood = dayIsGood;
     }
 
-    // Подготовка данных по группам
-    console.log('Processing groups data...');
-    const groupsData = {};
-    const groupsArray = Array.from(globalGroups);
-    groupsArray.forEach(groupName => {
-      const groupData = processSegment(groupName, resultMapByGroup, fbDataMapByGroup, 'group');
-      if (groupData) {
-        groupsData[groupName] = groupData;
+    // НОВАЯ СТРУКТУРА: Подготовка данных по Байер -> Группа
+    console.log('Processing buyer-group hierarchy data...');
+    const buyerGroupsData = {};
+    
+    // Создаем иерархическую структуру
+    Array.from(globalBuyers).forEach(buyerName => {
+      buyerGroupsData[buyerName] = {
+        buyerData: processSegment(buyerName, resultMapByBuyer, fbDataMapByBuyer, 'buyer'),
+        groups: {}
+      };
+      
+      // Для каждого байера находим его группы
+      if (buyerGroupsMap[buyerName]) {
+        Array.from(buyerGroupsMap[buyerName]).forEach(groupId => {
+          const groupName = groupIdToNameMap[groupId];
+          if (groupName) {
+            const buyerGroupKey = `${buyerName}:::${groupId}`;
+            
+            // Создаем данные для комбинации байер-группа
+            const buyerGroupData = processSegment(buyerGroupKey, resultMapByBuyerGroup, fbDataMapByBuyerGroup, 'buyer-group');
+            if (buyerGroupData) {
+              buyerGroupsData[buyerName].groups[groupName] = buyerGroupData;
+            }
+          }
+        });
       }
     });
 
-    // Подготовка данных по байерам
-    console.log('Processing buyers data...');
-    const buyersData = {};
-    const buyersArray = Array.from(globalBuyers);
-    buyersArray.forEach(buyerName => {
-      const buyerData = processSegment(buyerName, resultMapByBuyer, fbDataMapByBuyer, 'buyer');
-      if (buyerData) {
-        buyersData[buyerName] = buyerData;
-      }
-    });
-
-    // Подготовка данных по аккаунтам
-    console.log('Processing accounts data...');
-    const accountsData = {};
-    const accountsArray = Array.from(globalAccounts);
-    accountsArray.forEach(accountName => {
-      const accountData = processSegment(accountName, resultMapByAccount, fbDataMapByAccount, 'account');
-      if (accountData) {
-        accountsData[accountName] = accountData;
-      }
-    });
+    console.log('Buyer-group hierarchy created:', Object.keys(buyerGroupsData).length, 'buyers');
 
     // Общие метрики
     const crValue = (totalClicksAll > 0) ? (totalLeadsAll / totalClicksAll) * 100 : 0;
@@ -1130,9 +1146,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     return {
       article: article,
       generalData: generalData,
-      groupsData: groupsData,
-      buyersData: buyersData,
-      accountsData: accountsData,
+      buyerGroupsData: buyerGroupsData, // ТОЛЬКО ДЕРЕВОВИДНАЯ СТРУКТУРА
       generalMetrics: {
         activeDays: activeDays,
         daysInNorm: daysInNorm,
