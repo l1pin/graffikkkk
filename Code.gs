@@ -1,8 +1,3 @@
-/**
- * Функция получения данных за SQL запитом из БД - ВОЗВРАЩАЕТ ДАННЫЕ НАПРЯМУЮ
- * @param {string} strSQL - SQL запит
- * @return {Array|Object} - массив данных или объект с ошибкой
- */
 function getDataBySql(strSQL = "SELECT * FROM `ads_collection` WHERE `source` = 'tiktok'") {
     try {
         // === 1. Надсилаємо POST запит до PHP бекенду ===
