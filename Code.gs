@@ -1,5 +1,3 @@
-// Основной файл Code.gs для Google Apps Script - ОПТИМИЗИРОВАННЫЙ
-
 /**
  * Функция получения данных за SQL запитом из БД - ВОЗВРАЩАЕТ ДАННЫЕ НАПРЯМУЮ
  * @param {string} strSQL - SQL запит
@@ -69,7 +67,7 @@ function getDataBySql(strSQL = "SELECT * FROM `ads_collection` WHERE `source` = 
 }
 
 /**
- * Функция для парсинга названия кампании
+ * УЛУЧШЕННАЯ функция для парсинга названия кампании - точнее извлекает байера
  */
 function parseCampaignName(fullName) {
   const result = {
@@ -85,6 +83,8 @@ function parseCampaignName(fullName) {
   }
   
   try {
+    console.log('🔍 Parsing campaign name:', fullName);
+    
     // Ищем артикул в начале (буквы + цифры)
     const articleMatch = fullName.match(/^([A-Z]+\d+)/);
     if (articleMatch) {
@@ -93,21 +93,29 @@ function parseCampaignName(fullName) {
     
     // Разделяем по " | "
     const parts = fullName.split(' | ');
+    console.log('📝 Campaign parts:', parts);
     
     if (parts.length >= 2) {
-      // Извлекаем имя байера (второй элемент после разделения)
+      // ВТОРОЙ элемент - это БАЙЕР (точно!)
       result.buyer = parts[1].trim();
+      console.log('👤 Found buyer:', result.buyer);
       
       if (parts.length >= 3) {
         // Третий элемент содержит источник + аккаунт
         const sourceAccountPart = parts[2].trim();
         
-        // Ищем аккаунт (обычно VL + цифры в начале строки после источника)
-        const accountMatch = sourceAccountPart.match(/\b(VL\d+|[A-Z]+\d+)\b/);
-        if (accountMatch) {
-          result.account = accountMatch[1];
-          // Источник - это часть до аккаунта
-          result.source = sourceAccountPart.replace(accountMatch[0], '').trim();
+        // Парсим источник и аккаунт
+        // Пример: "TikTok WL1 Akk1.5" -> источник: "TikTok", аккаунт: "WL1"
+        const sourceMatch = sourceAccountPart.match(/^(TikTok|Facebook|Instagram|Google)\s*(.*)/i);
+        if (sourceMatch) {
+          result.source = sourceMatch[1];
+          const accountPart = sourceMatch[2];
+          
+          // Ищем аккаунт (обычно VL + цифры или WL + цифры)
+          const accountMatch = accountPart.match(/\b(VL\d+|WL\d+|[A-Z]+\d+)\b/);
+          if (accountMatch) {
+            result.account = accountMatch[1];
+          }
         } else {
           result.source = sourceAccountPart;
         }
@@ -124,9 +132,10 @@ function parseCampaignName(fullName) {
     }
     
   } catch (e) {
-    console.log('Ошибка парсинга названия кампании:', fullName, e);
+    console.log('❌ Ошибка парсинга названия кампании:', fullName, e);
   }
   
+  console.log('✅ Parsed campaign info:', result);
   return result;
 }
 
@@ -148,7 +157,7 @@ function include(filename) {
 }
 
 /**
- * Основная функция для построения аналитики - ОПТИМИЗИРОВАННАЯ
+ * Основная функция для построения аналитики - ИСПРАВЛЕННАЯ связка байеров и метрик
  */
 function buildChartForArticle(article, periodStart, periodEnd) {
   try {
@@ -296,7 +305,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       throw new Error('Артикул не может быть пустым');
     }
 
-    console.log('Starting analysis for article:', article);
+    console.log('🚀 Starting analysis for article:', article);
 
     // Проверяем период
     let periodChosen = false, periodStartDate, periodEndDate;
@@ -304,7 +313,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       periodChosen = true;
       periodStartDate = new Date(periodStart);
       periodEndDate = new Date(periodEnd);
-      console.log('Period selected:', periodStart, 'to', periodEnd);
+      console.log('📅 Period selected:', periodStart, 'to', periodEnd);
     }
 
     // Получаем данные из КАПЫ 3.0 (если доступны)
@@ -329,7 +338,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       const sheetKapy = ss.getSheetByName('КАПЫ 3.0');
       
       if (sheetKapy) {
-        console.log('Reading data from КАПЫ 3.0 sheet...');
+        console.log('📊 Reading data from КАПЫ 3.0 sheet...');
         const kapyData = sheetKapy.getDataRange().getValues();
         let articleRow = null;
         
@@ -342,7 +351,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         }
 
         if (articleRow) {
-          console.log('Found article in КАПЫ 3.0 at row:', articleRow);
+          console.log('✅ Found article in КАПЫ 3.0 at row:', articleRow);
           const rawAB = sheetKapy.getRange(articleRow, 28).getValue();
           const rawAF = sheetKapy.getRange(articleRow, 32).getValue();
           maxCPLThreshold = (rawAB !== '' && !isNaN(rawAB)) ? Number(rawAB) : 
@@ -378,9 +387,9 @@ function buildChartForArticle(article, periodStart, periodEnd) {
             zoneBackgroundColor = efficiencyZoneCell.getBackground();
             // Получаем цвет шрифта ячейки  
             zoneFontColor = efficiencyZoneCell.getFontColor();
-            console.log('Zone colors from sheet - Background:', zoneBackgroundColor, 'Font:', zoneFontColor);
+            console.log('🎨 Zone colors from sheet - Background:', zoneBackgroundColor, 'Font:', zoneFontColor);
           } catch (colorError) {
-            console.log('Error reading cell colors:', colorError);
+            console.log('⚠️ Error reading cell colors:', colorError);
             zoneBackgroundColor = '#f3f3f3';
             zoneFontColor = '#666666';
           }
@@ -405,13 +414,13 @@ function buildChartForArticle(article, periodStart, periodEnd) {
             fontColor: zoneFontColor || '#666666'
           };
         } else {
-          console.log('Article not found in КАПЫ 3.0');
+          console.log('⚠️ Article not found in КАПЫ 3.0');
         }
       } else {
-        console.log('КАПЫ 3.0 sheet not found');
+        console.log('⚠️ КАПЫ 3.0 sheet not found');
       }
     } catch (e) {
-      console.log('Ошибка при получении данных из КАПЫ 3.0:', e);
+      console.log('❌ Ошибка при получении данных из КАПЫ 3.0:', e);
     }
 
     const displayMaxCPL = maxCPLThreshold;
@@ -459,7 +468,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     `;
 
     // Получение данных из БД - ОДНИМ ЗАПРОСОМ
-    console.log('Fetching all data with combined query...');
+    console.log('🔍 Fetching all data with combined query...');
     let allData;
     
     try {
@@ -475,250 +484,241 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     }
 
     // Парсинг данных
-    console.log('Parsing database results...');
+    console.log('📊 Parsing database results...');
     const allRows = parseDbResults(allData);
     
-    // Разделяем данные на TikTok и трекер
-    const tiktokRows = allRows.filter(row => row.campaign_name && row.campaign_name.includes(article));
-    const trackerRows = allRows.filter(row => row.campaign_name_tracker && row.campaign_name_tracker.includes(article));
+    console.log('📈 Total rows from database:', allRows.length);
 
-    console.log('TikTok rows:', tiktokRows.length);
-    console.log('Tracker rows:', trackerRows.length);
+    // СОЗДАЕМ МАППИНГ campaign_name_tracker -> Buyer INFO для связки с TikTok данными
+    const campaignToBuyerMap = {}; // campaign_name -> buyer info
+    const adGroupToBuyerMap = {}; // adv_group_id -> buyer info
 
-    if (tiktokRows.length === 0 && trackerRows.length === 0) {
-      throw new Error(`📊 Данные не найдены!\n\nПо артикулу "${article}" нет данных за указанный период.\n\nВозможные причины:\n• Кампании еще не запускались\n• Данные еще не обновились в системе\n• Проверьте выбранный период дат`);
-    }
+    // Сначала проходим по данным трекера и создаем маппинг
+    console.log('🗺️ Creating buyer mapping from tracker data...');
+    allRows.forEach(row => {
+      const trackerName = String(row.campaign_name_tracker || '').trim();
+      const campaignName = String(row.campaign_name || '').trim();
+      const groupId = String(row.adv_group_id || '').trim();
+      const groupName = String(row.adv_group_name || '').trim();
+      
+      if (trackerName && trackerName.includes(article)) {
+        const campaignInfo = parseCampaignName(trackerName);
+        if (campaignInfo.buyer) {
+          // Создаем маппинг от campaign_name к buyer info
+          if (campaignName) {
+            campaignToBuyerMap[campaignName] = campaignInfo;
+            console.log(`🔗 Mapped campaign "${campaignName}" to buyer "${campaignInfo.buyer}"`);
+          }
+          
+          // Создаем маппинг от adv_group_id к buyer info (с названием группы)
+          if (groupId && groupName) {
+            adGroupToBuyerMap[groupId] = {
+              ...campaignInfo,
+              groupName: groupName
+            };
+            console.log(`🔗 Mapped group_id "${groupId}" (${groupName}) to buyer "${campaignInfo.buyer}"`);
+          }
+        }
+      }
+    });
 
-    // Собираем данные
-    console.log('Processing data...');
+    console.log('🗺️ Created mappings:');
+    console.log('Campaign to buyer map:', Object.keys(campaignToBuyerMap).length, 'entries');
+    console.log('Group ID to buyer map:', Object.keys(adGroupToBuyerMap).length, 'entries');
+
+    // СОЗДАЕМ СТРУКТУРЫ ДАННЫХ ДЛЯ ГРУППИРОВКИ
+    console.log('🗂️ Processing data structures...');
     let minDate = null, maxDate = null;
+    
+    // Общие структуры
     const resultMap = {};
-    const resultMapByGroupId = {};
-    const resultMapByGroup = {};
-    const resultMapByBuyer = {};
-    const resultMapByAccount = {};
-    // НОВАЯ СТРУКТУРА: Байер -> Группа объявлений
-    const resultMapByBuyerGroup = {};
     const fbDataMap = {};
-    const fbDataMapByGroupId = {};
-    const fbDataMapByGroup = {};
+    
+    // По байерам
+    const resultMapByBuyer = {};
     const fbDataMapByBuyer = {};
-    const fbDataMapByAccount = {};
-    // НОВАЯ СТРУКТУРА: Байер -> Группа объявлений
+    
+    // По группам объявлений
+    const resultMapByGroup = {};
+    const fbDataMapByGroup = {};
+    
+    // НОВАЯ СТРУКТУРА: Байер → Группа объявлений
+    const resultMapByBuyerGroup = {};
     const fbDataMapByBuyerGroup = {};
+    
+    // Вспомогательные структуры
     const groupsByDate = {};
     const buyersByDate = {};
     const accountsByDate = {};
     const globalGroups = new Set();
     const globalBuyers = new Set();
     const globalAccounts = new Set();
-    const groupIdToNameMap = {};
-    // НОВАЯ СТРУКТУРА: Отслеживание групп по байерам
     const buyerGroupsMap = {}; // { buyer: Set(groups) }
     let totalLeadsAll = 0, totalClicksAll = 0;
     const globalVideos = new Set(), globalSites = new Set();
 
-    // Обработка данных трекера
-    trackerRows.forEach(row => {
-      const fullName = String(row.campaign_name_tracker || '').trim();
+    // Создаем базовую структуру TikTok метрик
+    function createTikTokMetricsObject() {
+      return {
+        adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
+        cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
+      };
+    }
+
+    // ОБРАБОТКА ВСЕХ ДАННЫХ СРАЗУ - используя маппинг для связки
+    console.log('💰📱 Processing all data with buyer mapping...');
+    allRows.forEach(row => {
+      const trackerName = String(row.campaign_name_tracker || '').trim();
+      const campaignName = String(row.campaign_name || '').trim();
+      const groupId = String(row.adv_group_id || '').trim();
+      const groupName = String(row.adv_group_name || '').trim();
+      const advName = String(row.adv_name || '').trim();
+      const targetUrl = String(row.target_url || '').trim();
       const dateObj = new Date(row.adv_date);
+      
       if (isNaN(dateObj.getTime())) return;
       
-      const campaignInfo = parseCampaignName(fullName);
-      if (campaignInfo.article !== article) return;
-      
       const dateStr = Utilities.formatDate(dateObj, 'Europe/Kiev', 'yyyy-MM-dd');
-      const groupId = String(row.adv_group_id || '').trim();
+      
+      // Определяем buyer info - ПРИОРИТЕТ tracker данным
+      let buyerInfo = null;
+      if (trackerName && trackerName.includes(article)) {
+        buyerInfo = parseCampaignName(trackerName);
+      } else if (campaignName && campaignToBuyerMap[campaignName]) {
+        buyerInfo = campaignToBuyerMap[campaignName];
+      } else if (groupId && adGroupToBuyerMap[groupId]) {
+        buyerInfo = adGroupToBuyerMap[groupId];
+      }
+      
+      if (!buyerInfo || buyerInfo.article !== article) return;
+      
+      // ДАННЫЕ ЛИДОВ И РАСХОДОВ (из tracker)
       const leads = Number(row.valid) || 0;
       const spend = Number(row.cost) || 0;
       const siteClicks = Number(row.clicks_on_link_tracker) || 0;
-
-      if (!resultMap[dateStr]) resultMap[dateStr] = { leads: 0, spend: 0 };
-      resultMap[dateStr].leads += leads;
-      resultMap[dateStr].spend += spend;
-
-      if (!resultMapByGroupId[groupId]) resultMapByGroupId[groupId] = {};
-      if (!resultMapByGroupId[groupId][dateStr]) resultMapByGroupId[groupId][dateStr] = { leads: 0, spend: 0 };
-      resultMapByGroupId[groupId][dateStr].leads += leads;
-      resultMapByGroupId[groupId][dateStr].spend += spend;
-
-      // По байерам
-      if (campaignInfo.buyer) {
-        if (!resultMapByBuyer[campaignInfo.buyer]) resultMapByBuyer[campaignInfo.buyer] = {};
-        if (!resultMapByBuyer[campaignInfo.buyer][dateStr]) resultMapByBuyer[campaignInfo.buyer][dateStr] = { leads: 0, spend: 0 };
-        resultMapByBuyer[campaignInfo.buyer][dateStr].leads += leads;
-        resultMapByBuyer[campaignInfo.buyer][dateStr].spend += spend;
-        globalBuyers.add(campaignInfo.buyer);
+      
+      // ДАННЫЕ TIKTOK МЕТРИК (из TikTok)
+      const hasMetrics = (campaignName || groupId); // Есть ли TikTok метрики
+      
+      if (leads > 0 || spend > 0) {
+        console.log(`💰 Processing leads/spend for buyer: ${buyerInfo.buyer}, group: ${groupName}, date: ${dateStr}, leads: ${leads}, spend: ${spend}`);
         
-        if (!buyersByDate[dateStr]) buyersByDate[dateStr] = [];
-        buyersByDate[dateStr].push(campaignInfo.buyer);
-        
-        // НОВАЯ СТРУКТУРА: Байер -> Группа (по ID группы)
-        if (groupId) {
-          const buyerGroupKey = `${campaignInfo.buyer}:::${groupId}`;
+        // Общие данные
+        if (!resultMap[dateStr]) resultMap[dateStr] = { leads: 0, spend: 0 };
+        resultMap[dateStr].leads += leads;
+        resultMap[dateStr].spend += spend;
+
+        // По байерам
+        if (buyerInfo.buyer) {
+          if (!resultMapByBuyer[buyerInfo.buyer]) resultMapByBuyer[buyerInfo.buyer] = {};
+          if (!resultMapByBuyer[buyerInfo.buyer][dateStr]) resultMapByBuyer[buyerInfo.buyer][dateStr] = { leads: 0, spend: 0 };
+          resultMapByBuyer[buyerInfo.buyer][dateStr].leads += leads;
+          resultMapByBuyer[buyerInfo.buyer][dateStr].spend += spend;
+          globalBuyers.add(buyerInfo.buyer);
+          
+          if (!buyersByDate[dateStr]) buyersByDate[dateStr] = [];
+          buyersByDate[dateStr].push(buyerInfo.buyer);
+        }
+
+        // По группам объявлений
+        if (groupName) {
+          if (!resultMapByGroup[groupName]) resultMapByGroup[groupName] = {};
+          if (!resultMapByGroup[groupName][dateStr]) resultMapByGroup[groupName][dateStr] = { leads: 0, spend: 0 };
+          resultMapByGroup[groupName][dateStr].leads += leads;
+          resultMapByGroup[groupName][dateStr].spend += spend;
+          globalGroups.add(groupName);
+          
+          if (!groupsByDate[dateStr]) groupsByDate[dateStr] = [];
+          groupsByDate[dateStr].push(groupName);
+        }
+
+        // НОВАЯ СТРУКТУРА: Байер → Группа объявлений
+        if (buyerInfo.buyer && groupName) {
+          const buyerGroupKey = `${buyerInfo.buyer}:::${groupName}`;
           if (!resultMapByBuyerGroup[buyerGroupKey]) resultMapByBuyerGroup[buyerGroupKey] = {};
           if (!resultMapByBuyerGroup[buyerGroupKey][dateStr]) resultMapByBuyerGroup[buyerGroupKey][dateStr] = { leads: 0, spend: 0 };
           resultMapByBuyerGroup[buyerGroupKey][dateStr].leads += leads;
           resultMapByBuyerGroup[buyerGroupKey][dateStr].spend += spend;
           
           // Отслеживаем группы для каждого байера
-          if (!buyerGroupsMap[campaignInfo.buyer]) buyerGroupsMap[campaignInfo.buyer] = new Set();
-          buyerGroupsMap[campaignInfo.buyer].add(groupId);
+          if (!buyerGroupsMap[buyerInfo.buyer]) buyerGroupsMap[buyerInfo.buyer] = new Set();
+          buyerGroupsMap[buyerInfo.buyer].add(groupName);
         }
-      }
 
-      // По аккаунтам
-      if (campaignInfo.account) {
-        if (!resultMapByAccount[campaignInfo.account]) resultMapByAccount[campaignInfo.account] = {};
-        if (!resultMapByAccount[campaignInfo.account][dateStr]) resultMapByAccount[campaignInfo.account][dateStr] = { leads: 0, spend: 0 };
-        resultMapByAccount[campaignInfo.account][dateStr].leads += leads;
-        resultMapByAccount[campaignInfo.account][dateStr].spend += spend;
-        globalAccounts.add(campaignInfo.account);
+        totalLeadsAll += leads;
+        totalClicksAll += siteClicks;
+
+        if (!minDate || dateObj < minDate) minDate = dateObj;
+        if (!maxDate || dateObj > maxDate) maxDate = dateObj;
+      }
+      
+      // TIKTOK МЕТРИКИ (frequency, CTR, CPM, etc.)
+      if (hasMetrics && (campaignName || groupId)) {
+        console.log(`📱 Processing TikTok metrics for buyer: ${buyerInfo.buyer}, group: ${groupName}, date: ${dateStr}`);
         
-        if (!accountsByDate[dateStr]) accountsByDate[dateStr] = [];
-        accountsByDate[dateStr].push(campaignInfo.account);
-      }
-
-      totalLeadsAll += leads;
-      totalClicksAll += siteClicks;
-
-      if (!minDate || dateObj < minDate) minDate = dateObj;
-      if (!maxDate || dateObj > maxDate) maxDate = dateObj;
-    });
-
-    // Обработка данных TikTok
-    console.log('Processing TikTok data...');
-    tiktokRows.forEach(row => {
-      const fullName = String(row.campaign_name || '').trim();
-      const groupName = String(row.adv_group_name || '').trim();
-      const groupId = String(row.adv_group_id || '').trim();
-      const advName = String(row.adv_name || '').trim(); // Добавляем логирование названия рекламы
-      const dateObj = new Date(row.adv_date);
-      if (isNaN(dateObj.getTime())) return;
-      
-      const campaignInfo = parseCampaignName(fullName);
-      if (campaignInfo.article !== article) return;
-      
-      // Логируем для отладки
-      if (advName) {
-        console.log('Found adv_name:', advName, 'for date:', Utilities.formatDate(dateObj, 'Europe/Kiev', 'yyyy-MM-dd'));
-      }
-      
-      const dateStr = Utilities.formatDate(dateObj, 'Europe/Kiev', 'yyyy-MM-dd');
-
-      // Создаем маппинг ID → название группы
-      if (groupId && groupName) {
-        groupIdToNameMap[groupId] = groupName;
-        globalGroups.add(groupName);
-      }
-
-      // Собираем группы для каждой даты
-      if (!groupsByDate[dateStr]) groupsByDate[dateStr] = [];
-      groupsByDate[dateStr].push(groupName);
-
-      if (!fbDataMap[dateStr]) {
-        fbDataMap[dateStr] = {
-          adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
-          cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-        };
-      }
-      
-      // TikTok данные
-      fbDataMap[dateStr].adId.push(row.adv_id !== undefined && row.adv_id !== null ? String(row.adv_id) : '');
-      fbDataMap[dateStr].freq.push(row.frequency !== undefined && row.frequency !== null ? String(row.frequency) : '');
-      fbDataMap[dateStr].ctr.push(row.ctr !== undefined && row.ctr !== null ? String(row.ctr) : '');
-      fbDataMap[dateStr].cpm.push(row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : '');
-      fbDataMap[dateStr].linkClicks.push(row.clicks_on_link !== undefined && row.clicks_on_link !== null ? String(row.clicks_on_link) : '');
-      fbDataMap[dateStr].cpc.push(row.cpc !== undefined && row.cpc !== null ? String(row.cpc) : '');
-      fbDataMap[dateStr].avgWatchTime.push(row.average_time_on_video !== undefined && row.average_time_on_video !== null ? String(row.average_time_on_video) : '');
-      fbDataMap[dateStr].videoName.push(row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '' ? String(row.adv_name).trim() : '');
-      fbDataMap[dateStr].siteUrl.push(row.target_url !== undefined && row.target_url !== null && row.target_url !== '' ? String(row.target_url).trim() : '');
-      fbDataMap[dateStr].budget.push('');
-
-      // По ID группы
-      if (!fbDataMapByGroupId[groupId]) fbDataMapByGroupId[groupId] = {};
-      if (!fbDataMapByGroupId[groupId][dateStr]) {
-        fbDataMapByGroupId[groupId][dateStr] = {
-          adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
-          cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-        };
-      }
-      fbDataMapByGroupId[groupId][dateStr].adId.push(row.adv_id !== undefined && row.adv_id !== null ? String(row.adv_id) : '');
-      fbDataMapByGroupId[groupId][dateStr].freq.push(row.frequency !== undefined && row.frequency !== null ? String(row.frequency) : '');
-      fbDataMapByGroupId[groupId][dateStr].ctr.push(row.ctr !== undefined && row.ctr !== null ? String(row.ctr) : '');
-      fbDataMapByGroupId[groupId][dateStr].cpm.push(row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : '');
-      fbDataMapByGroupId[groupId][dateStr].linkClicks.push(row.clicks_on_link !== undefined && row.clicks_on_link !== null ? String(row.clicks_on_link) : '');
-      fbDataMapByGroupId[groupId][dateStr].cpc.push(row.cpc !== undefined && row.cpc !== null ? String(row.cpc) : '');
-      fbDataMapByGroupId[groupId][dateStr].avgWatchTime.push(row.average_time_on_video !== undefined && row.average_time_on_video !== null ? String(row.average_time_on_video) : '');
-      fbDataMapByGroupId[groupId][dateStr].videoName.push(row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '' ? String(row.adv_name).trim() : '');
-      fbDataMapByGroupId[groupId][dateStr].siteUrl.push(row.target_url !== undefined && row.target_url !== null && row.target_url !== '' ? String(row.target_url).trim() : '');
-      fbDataMapByGroupId[groupId][dateStr].budget.push('');
-
-      // По байерам
-      if (campaignInfo.buyer) {
-        if (!fbDataMapByBuyer[campaignInfo.buyer]) fbDataMapByBuyer[campaignInfo.buyer] = {};
-        if (!fbDataMapByBuyer[campaignInfo.buyer][dateStr]) {
-          fbDataMapByBuyer[campaignInfo.buyer][dateStr] = {
-            adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
-            cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-          };
+        // Добавляем метрики в структуру
+        function addTikTokMetrics(targetObject, dateKey) {
+          if (!targetObject[dateKey]) {
+            targetObject[dateKey] = createTikTokMetricsObject();
+          }
+          
+          targetObject[dateKey].adId.push(row.adv_id !== undefined && row.adv_id !== null ? String(row.adv_id) : '');
+          targetObject[dateKey].freq.push(row.frequency !== undefined && row.frequency !== null ? String(row.frequency) : '');
+          targetObject[dateKey].ctr.push(row.ctr !== undefined && row.ctr !== null ? String(row.ctr) : '');
+          targetObject[dateKey].cpm.push(row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : '');
+          targetObject[dateKey].linkClicks.push(row.clicks_on_link !== undefined && row.clicks_on_link !== null ? String(row.clicks_on_link) : '');
+          targetObject[dateKey].cpc.push(row.cpc !== undefined && row.cpc !== null ? String(row.cpc) : '');
+          targetObject[dateKey].avgWatchTime.push(row.average_time_on_video !== undefined && row.average_time_on_video !== null ? String(row.average_time_on_video) : '');
+          targetObject[dateKey].videoName.push(advName || '');
+          targetObject[dateKey].siteUrl.push(targetUrl || '');
+          targetObject[dateKey].budget.push(''); // Бюджет пока пустой
         }
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].adId.push(row.adv_id !== undefined && row.adv_id !== null ? String(row.adv_id) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].freq.push(row.frequency !== undefined && row.frequency !== null ? String(row.frequency) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].ctr.push(row.ctr !== undefined && row.ctr !== null ? String(row.ctr) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].cpm.push(row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].linkClicks.push(row.clicks_on_link !== undefined && row.clicks_on_link !== null ? String(row.clicks_on_link) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].cpc.push(row.cpc !== undefined && row.cpc !== null ? String(row.cpc) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].avgWatchTime.push(row.average_time_on_video !== undefined && row.average_time_on_video !== null ? String(row.average_time_on_video) : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].videoName.push(row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '' ? String(row.adv_name).trim() : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].siteUrl.push(row.target_url !== undefined && row.target_url !== null && row.target_url !== '' ? String(row.target_url).trim() : '');
-        fbDataMapByBuyer[campaignInfo.buyer][dateStr].budget.push('');
-      }
 
+        // ОБЩИЕ ДАННЫЕ
+        addTikTokMetrics(fbDataMap, dateStr);
+
+        // ПО БАЙЕРАМ
+        if (buyerInfo.buyer) {
+          if (!fbDataMapByBuyer[buyerInfo.buyer]) fbDataMapByBuyer[buyerInfo.buyer] = {};
+          addTikTokMetrics(fbDataMapByBuyer[buyerInfo.buyer], dateStr);
+        }
+
+        // ПО ГРУППАМ ОБЪЯВЛЕНИЙ
+        if (groupName) {
+          if (!fbDataMapByGroup[groupName]) fbDataMapByGroup[groupName] = {};
+          addTikTokMetrics(fbDataMapByGroup[groupName], dateStr);
+        }
+
+        // БАЙЕР → ГРУППА ОБЪЯВЛЕНИЙ
+        if (buyerInfo.buyer && groupName) {
+          const buyerGroupKey = `${buyerInfo.buyer}:::${groupName}`;
+          if (!fbDataMapByBuyerGroup[buyerGroupKey]) fbDataMapByBuyerGroup[buyerGroupKey] = {};
+          addTikTokMetrics(fbDataMapByBuyerGroup[buyerGroupKey], dateStr);
+        }
+
+        // Собираем уникальные видео и сайты
+        if (advName && advName.trim() !== '') {
+          globalVideos.add(advName.trim());
+        }
+        if (targetUrl && targetUrl.trim() !== '') {
+          globalSites.add(targetUrl.trim());
+        }
+      }
+      
       // По аккаунтам
-      if (campaignInfo.account) {
-        if (!fbDataMapByAccount[campaignInfo.account]) fbDataMapByAccount[campaignInfo.account] = {};
-        if (!fbDataMapByAccount[campaignInfo.account][dateStr]) {
-          fbDataMapByAccount[campaignInfo.account][dateStr] = {
-            adId: [], freq: [], ctr: [], cpm: [], linkClicks: [],
-            cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-          };
-        }
-        fbDataMapByAccount[campaignInfo.account][dateStr].adId.push(row.adv_id !== undefined && row.adv_id !== null ? String(row.adv_id) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].freq.push(row.frequency !== undefined && row.frequency !== null ? String(row.frequency) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].ctr.push(row.ctr !== undefined && row.ctr !== null ? String(row.ctr) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].cpm.push(row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].linkClicks.push(row.clicks_on_link !== undefined && row.clicks_on_link !== null ? String(row.clicks_on_link) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].cpc.push(row.cpc !== undefined && row.cpc !== null ? String(row.cpc) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].avgWatchTime.push(row.average_time_on_video !== undefined && row.average_time_on_video !== null ? String(row.average_time_on_video) : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].videoName.push(row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '' ? String(row.adv_name).trim() : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].siteUrl.push(row.target_url !== undefined && row.target_url !== null && row.target_url !== '' ? String(row.target_url).trim() : '');
-        fbDataMapByAccount[campaignInfo.account][dateStr].budget.push('');
-      }
-
-      if (row.adv_name && row.adv_name !== undefined && row.adv_name !== null && row.adv_name !== '') {
-        globalVideos.add(String(row.adv_name).trim());
-      }
-      if (row.target_url && row.target_url !== undefined && row.target_url !== null && row.target_url !== '') {
-        globalSites.add(String(row.target_url).trim());
+      if (buyerInfo.account) {
+        globalAccounts.add(buyerInfo.account);
+        if (!accountsByDate[dateStr]) accountsByDate[dateStr] = [];
+        accountsByDate[dateStr].push(buyerInfo.account);
       }
     });
 
-    // Заполняем resultMapByGroup на основе связки ID → название группы
-    Object.keys(groupIdToNameMap).forEach(groupId => {
-      const groupName = groupIdToNameMap[groupId];
-      if (resultMapByGroupId[groupId]) {
-        resultMapByGroup[groupName] = resultMapByGroupId[groupId];
-      }
-    });
-
-    // Заполняем fbDataMapByGroup на основе связки ID → название группы
-    Object.keys(groupIdToNameMap).forEach(groupId => {
-      const groupName = groupIdToNameMap[groupId];
-      if (fbDataMapByGroupId[groupId]) {
-        fbDataMapByGroup[groupName] = fbDataMapByGroupId[groupId];
-      }
-    });
+    console.log('📊 Data processing completed!');
+    console.log('👥 Found buyers:', Array.from(globalBuyers));
+    console.log('📁 Found groups:', Array.from(globalGroups));
+    console.log('🎬 Found videos:', globalVideos.size);
+    console.log('🌐 Found sites:', globalSites.size);
+    console.log('🗂️ Buyer groups mapping:', buyerGroupsMap);
 
     if (!minDate) {
       throw new Error(`📊 Нет активных данных!\n\nПо артикулу "${article}" не найдено активных периодов.\n\nУбедитесь, что:\n• Артикул написан правильно\n• Кампании имели расходы\n• Выбран корректный период`);
@@ -756,6 +756,8 @@ function buildChartForArticle(article, periodStart, periodEnd) {
 
     // Функция для обработки сегмента
     function processSegment(segmentName, resultMapBySegment, fbDataMapBySegment, segmentType) {
+      console.log(`🔄 Processing segment: ${segmentName} (${segmentType})`);
+      
       let segmentMinDate = null, segmentMaxDate = null;
       
       let checkDate = new Date(minDate);
@@ -771,7 +773,12 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         checkDate.setDate(checkDate.getDate() + 1);
       }
 
-      if (!segmentMinDate || !segmentMaxDate) return null;
+      if (!segmentMinDate || !segmentMaxDate) {
+        console.log(`⚠️ No active data found for segment: ${segmentName}`);
+        return null;
+      }
+
+      console.log(`✅ Segment ${segmentName} has data from ${segmentMinDate.toISOString().split('T')[0]} to ${segmentMaxDate.toISOString().split('T')[0]}`);
 
       const segmentDates = [];
       let curDateSeg = new Date(segmentMinDate);
@@ -819,13 +826,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         const daySpend = rec.spend;
         const dayCpl = (dayLeads > 0) ? (daySpend / dayLeads) : 0;
 
-        const fbDataSegment = (dayLeads > 0 || daySpend > 0) ? (fbDataMapBySegment[segmentName] && fbDataMapBySegment[segmentName][dateKey] || {
-          freq: [], ctr: [], cpm: [], linkClicks: [],
-          cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-        }) : {
-          freq: [], ctr: [], cpm: [], linkClicks: [],
-          cpc: [], avgWatchTime: [], videoName: [], siteUrl: [], budget: []
-        };
+        const fbDataSegment = (dayLeads > 0 || daySpend > 0) ? (fbDataMapBySegment[segmentName] && fbDataMapBySegment[segmentName][dateKey] || createTikTokMetricsObject()) : createTikTokMetricsObject();
 
         if (dayLeads === 0 && daySpend === 0) {
           segmentData.cplDay.push(0);
@@ -937,6 +938,8 @@ function buildChartForArticle(article, periodStart, periodEnd) {
 
       const segmentCR = (segmentClicks > 0) ? (segmentLeads / segmentClicks) * 100 : 0;
       
+      console.log(`✅ Processed segment ${segmentName}: ${activeDaysSegment} active days, ${segmentVideos.size} videos, ${segmentSites.size} sites`);
+      
       return {
         data: segmentData,
         metrics: {
@@ -951,7 +954,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     }
 
     // Подготовка данных для общей таблицы
-    console.log('Building general data...');
+    console.log('📊 Building general data...');
     const generalData = {
       dates: [],
       ratings: [],
@@ -1105,12 +1108,14 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       prevDayGood = dayIsGood;
     }
 
-    // НОВАЯ СТРУКТУРА: Подготовка данных по Байер -> Группа
-    console.log('Processing buyer-group hierarchy data...');
+    // ИСПРАВЛЕННАЯ СТРУКТУРА: Подготовка данных по Байер → Группа
+    console.log('🌲 Processing buyer-group hierarchy data...');
     const buyerGroupsData = {};
     
     // Создаем иерархическую структуру
     Array.from(globalBuyers).forEach(buyerName => {
+      console.log(`👤 Processing buyer: ${buyerName}`);
+      
       buyerGroupsData[buyerName] = {
         buyerData: processSegment(buyerName, resultMapByBuyer, fbDataMapByBuyer, 'buyer'),
         groups: {}
@@ -1118,35 +1123,45 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       
       // Для каждого байера находим его группы
       if (buyerGroupsMap[buyerName]) {
-        Array.from(buyerGroupsMap[buyerName]).forEach(groupId => {
-          const groupName = groupIdToNameMap[groupId];
-          if (groupName) {
-            const buyerGroupKey = `${buyerName}:::${groupId}`;
-            
-            // Создаем данные для комбинации байер-группа
-            const buyerGroupData = processSegment(buyerGroupKey, resultMapByBuyerGroup, fbDataMapByBuyerGroup, 'buyer-group');
-            if (buyerGroupData) {
-              buyerGroupsData[buyerName].groups[groupName] = buyerGroupData;
-            }
+        console.log(`📁 Found ${buyerGroupsMap[buyerName].size} groups for buyer ${buyerName}:`, Array.from(buyerGroupsMap[buyerName]));
+        
+        Array.from(buyerGroupsMap[buyerName]).forEach(groupName => {
+          console.log(`📂 Processing group: ${groupName} for buyer: ${buyerName}`);
+          
+          const buyerGroupKey = `${buyerName}:::${groupName}`;
+          
+          // Создаем данные для комбинации байер-группа
+          const buyerGroupData = processSegment(buyerGroupKey, resultMapByBuyerGroup, fbDataMapByBuyerGroup, 'buyer-group');
+          if (buyerGroupData) {
+            buyerGroupsData[buyerName].groups[groupName] = buyerGroupData;
+            console.log(`✅ Added group ${groupName} data for buyer ${buyerName} with ${buyerGroupData.metrics.activeDays} active days`);
+          } else {
+            console.log(`⚠️ No data found for group ${groupName} of buyer ${buyerName}`);
           }
         });
+      } else {
+        console.log(`⚠️ No groups found for buyer ${buyerName}`);
       }
     });
 
-    console.log('Buyer-group hierarchy created:', Object.keys(buyerGroupsData).length, 'buyers');
+    console.log('🌲 Buyer-group hierarchy created:', Object.keys(buyerGroupsData).length, 'buyers');
+    console.log('🎯 Final structure overview:');
+    Object.keys(buyerGroupsData).forEach(buyer => {
+      console.log(`  👤 ${buyer}: ${Object.keys(buyerGroupsData[buyer].groups).length} groups`);
+    });
 
     // Общие метрики
     const crValue = (totalClicksAll > 0) ? (totalLeadsAll / totalClicksAll) * 100 : 0;
     const crStr = crValue.toFixed(2).replace('.', ',') + '%';
 
-    console.log('Analysis completed successfully!');
-    console.log('Total unique videos found:', globalVideos.size);
-    console.log('Video names:', Array.from(globalVideos));
+    console.log('🎉 Analysis completed successfully!');
+    console.log('📊 Total unique videos found:', globalVideos.size);
+    console.log('👥 Buyers with groups:', Object.keys(buyerGroupsData));
 
     return {
       article: article,
       generalData: generalData,
-      buyerGroupsData: buyerGroupsData, // ТОЛЬКО ДЕРЕВОВИДНАЯ СТРУКТУРА
+      buyerGroupsData: buyerGroupsData, // ИСПРАВЛЕННАЯ ДЕРЕВОВИДНАЯ СТРУКТУРА с полными метриками
       generalMetrics: {
         activeDays: activeDays,
         daysInNorm: daysInNorm,
