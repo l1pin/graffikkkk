@@ -1246,6 +1246,10 @@
       const periodStart = document.getElementById('periodStart').value;
       const periodEnd = document.getElementById('periodEnd').value;
 
+      console.log('🔍 Input values - Article:', article, 'Start:', periodStart, 'End:', periodEnd);
+      console.log('🔍 Period start element value:', document.getElementById('periodStart').value);
+      console.log('🔍 Period end element value:', document.getElementById('periodEnd').value);
+
       if (!article) {
         showError('📝 Введите артикул\n\nПожалуйста, укажите артикул для анализа в поле ввода.');
         return;
@@ -1769,7 +1773,8 @@
         'CPC (целевая страница)',
         'Среднее время воспроизведения видео',
         'Название рекламы',
-        'URL-адрес веб-сайта'
+        'URL-адрес веб-сайта',
+        'Бюджет группы объявлений'
       ];
 
       let html = '<tbody>';
@@ -1822,6 +1827,7 @@
               const urlValue = data.siteUrl ? data.siteUrl[i] : '';
               value = makeUrlsClickable(urlValue);
               break;
+            case 19: value = data.budget ? data.budget[i] : ''; break;
           }
 
           const colClass = data.columnClasses && data.columnClasses[i] ? data.columnClasses[i] : 'normal-spend';
@@ -1848,6 +1854,10 @@
 
     function displayBuyerGroups(article, buyerGroupsData) {
       console.log('🌲 Отображаем деревовидную структуру:', buyerGroupsData);
+      console.log('🔍 Список байеров:', Object.keys(buyerGroupsData));
+      Object.keys(buyerGroupsData).forEach((buyerName, index) => {
+        console.log(`🔍 Байер ${index}: "${buyerName}" (тип: ${typeof buyerName}, длина: ${buyerName.length})`);
+      });
 
       const container = document.getElementById('buyerGroupsContainer');
 
@@ -1877,12 +1887,25 @@
           </div>
         `;
 
-        Object.keys(buyerGroupsData).forEach(buyerName => {
+        Object.keys(buyerGroupsData).forEach((buyerName, buyerIndex) => {
           const buyerData = buyerGroupsData[buyerName];
-          const cleanBuyerName = buyerName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+          
+          // Улучшенная очистка имени байера
+          let cleanBuyerName = String(buyerName || `buyer_${buyerIndex}`)
+            .replace(/[^a-zA-Z0-9]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_|_$/g, ''); // Убираем подчеркивания в начале и конце
+          
+          // Если имя пустое, используем индекс
+          if (!cleanBuyerName) {
+            cleanBuyerName = `buyer_${buyerIndex}`;
+          }
+          
           const buyerId = `enhanced_buyer_${cleanBuyerName}`;
           const groupsCount = Object.keys(buyerData.groups || {}).length;
           const buyerChartId = `buyer_chart_${buyerId}`;
+          
+          console.log('🔍 Buyer name:', buyerName, '-> Clean name:', cleanBuyerName, '-> ID:', buyerId);
 
           html += `
             <div class="buyer-group-section">
@@ -1952,8 +1975,20 @@
                   
                   ${Object.keys(buyerData.groups || {}).map((groupName, groupIndex) => {
             const groupData = buyerData.groups[groupName];
-            const cleanGroupName = groupName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+            // Улучшенная очистка имени группы
+            let cleanGroupName = String(groupName || `group_${groupIndex}`)
+              .replace(/[^a-zA-Z0-9]/g, '_')
+              .replace(/_+/g, '_')
+              .replace(/^_|_$/g, ''); // Убираем подчеркивания в начале и конце
+            
+            // Если имя пустое, используем индекс
+            if (!cleanGroupName) {
+              cleanGroupName = `group_${groupIndex}`;
+            }
+            
             const nestedGroupId = `enhanced_group_${cleanBuyerName}_${cleanGroupName}_${groupIndex}`;
+            
+            console.log('🔍 Group name:', groupName, '-> Clean name:', cleanGroupName, '-> ID:', nestedGroupId);
             const chartId = `chart_${nestedGroupId}`;
             const tableId = `table_${nestedGroupId}`;
 
@@ -2036,31 +2071,65 @@
         // Создаем графики и таблицы с задержкой
         setTimeout(() => {
           console.log('📊 Начинаем создание графиков через 100мс');
+          
+          // Создаем функции с замыканиями для каждого байера
           Object.keys(buyerGroupsData).forEach((buyerName, buyerIndex) => {
             const buyerData = buyerGroupsData[buyerName];
-            const cleanBuyerName = buyerName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+            
+            // Такая же логика очистки как в HTML
+            let cleanBuyerName = String(buyerName || `buyer_${buyerIndex}`)
+              .replace(/[^a-zA-Z0-9]/g, '_')
+              .replace(/_+/g, '_')
+              .replace(/^_|_$/g, '');
+            
+            if (!cleanBuyerName) {
+              cleanBuyerName = `buyer_${buyerIndex}`;
+            }
+            
             const buyerId = `enhanced_buyer_${cleanBuyerName}`;
             const buyerChartId = `buyer_chart_${buyerId}`;
             const buyerTableId = `buyer_table_${buyerId}`;
 
-            if (buyerData.buyerData) {
-              displaySegmentChart(buyerChartId, article, buyerName, buyerData.buyerData.data);
-              displaySegmentTable(buyerTableId, buyerData.buyerData.data, 'buyer');
-            }
+            console.log('📊 Создаем элементы для байера:', buyerName, 'ChartID:', buyerChartId, 'TableID:', buyerTableId);
 
+            // Создаем функцию с замыканием для байера
+            (function(bName, bData, bChartId, bTableId) {
+              if (bData.buyerData) {
+                console.log('📊 Создаем график и таблицу для байера:', bName);
+                displaySegmentChart(bChartId, article, bName, bData.buyerData.data);
+                displaySegmentTable(bTableId, bData.buyerData.data, 'buyer');
+              }
+            })(buyerName, buyerData, buyerChartId, buyerTableId);
+
+            // Создаем функции с замыканиями для групп
             Object.keys(buyerData.groups || {}).forEach((groupName, groupIndex) => {
               const groupData = buyerData.groups[groupName];
-              const cleanGroupName = groupName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+              
+              // Такая же логика очистки как в HTML
+              let cleanGroupName = String(groupName || `group_${groupIndex}`)
+                .replace(/[^a-zA-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '');
+              
+              if (!cleanGroupName) {
+                cleanGroupName = `group_${groupIndex}`;
+              }
+              
               const nestedGroupId = `enhanced_group_${cleanBuyerName}_${cleanGroupName}_${groupIndex}`;
               const chartId = `chart_${nestedGroupId}`;
               const tableId = `table_${nestedGroupId}`;
 
-              console.log('📊 Создаем элементы для группы:', groupName, 'ID:', chartId, tableId);
-              displaySegmentTable(tableId, groupData.data, 'group');
-              displaySegmentChart(chartId, article, `${buyerName} → ${groupName}`, groupData.data);
+              console.log('📊 Создаем элементы для группы:', groupName, 'байера:', buyerName, 'ChartID:', chartId, 'TableID:', tableId);
+
+              // Создаем функцию с замыканием для группы
+              (function(gName, gData, gChartId, gTableId, bName) {
+                console.log('📊 Создаем график и таблицу для группы:', gName, 'байера:', bName);
+                displaySegmentTable(gTableId, gData.data, 'group');
+                displaySegmentChart(gChartId, article, `${bName} → ${gName}`, gData.data);
+              })(groupName, groupData, chartId, tableId, buyerName);
             });
           });
-        }, 100); // Закрываем setTimeout
+        }, 100);
       } else {
         container.innerHTML = `
           <div class="buyer-group-main-section">
@@ -2194,6 +2263,8 @@
 
     function displaySegmentTable(tableId, data, segmentType = 'group') {
       console.log(`📋 Отображаем таблицу ${tableId} с данными:`, data);
+      console.log(`📋 Проверяем наличие budget в данных:`, data.budget ? 'ЕСТЬ' : 'НЕТ');
+      console.log(`📋 Первые несколько значений budget:`, data.budget ? data.budget.slice(0, 3) : 'undefined');
       console.log(`📋 Ищем элемент с ID: "${tableId}"`);
 
       const table = document.getElementById(tableId);
@@ -2222,7 +2293,8 @@
         'CPC (целевая страница)',
         'Среднее время воспроизведения видео',
         'Название рекламы',
-        'URL-адрес веб-сайта'
+        'URL-адрес веб-сайта',
+        'Бюджет группы объявлений'
       ] : [
         'Дата',
         'Рейтинг',
@@ -2239,7 +2311,8 @@
         'CPC (целевая страница)',
         'Среднее время воспроизведения видео',
         'Название рекламы',
-        'URL-адрес веб-сайта'
+        'URL-адрес веб-сайта',
+        'Бюджет группы объявлений'
       ];
 
       let html = '<tbody>';
@@ -2291,6 +2364,10 @@
                 const urlValue = data.siteUrl ? data.siteUrl[i] : '';
                 value = makeUrlsClickable(urlValue);
                 break;
+              case 17: 
+                value = data.budget ? data.budget[i] : ''; 
+                console.log('🔍 BUYER Budget case 17 - data.budget[' + i + ']:', value, 'Full budget array:', data.budget);
+                break;
             }
           } else {
             switch (index) {
@@ -2330,6 +2407,10 @@
               case 15:
                 const urlValue = data.siteUrl ? data.siteUrl[i] : '';
                 value = makeUrlsClickable(urlValue);
+                break;
+              case 16: 
+                value = data.budget ? data.budget[i] : ''; 
+                console.log('🔍 GROUP Budget case 16 - data.budget[' + i + ']:', value, 'Full budget array:', data.budget);
                 break;
             }
           }
