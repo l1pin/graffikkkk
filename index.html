@@ -530,6 +530,7 @@
       left: 0;
       background: inherit;
       min-width: 220px;
+      text-align: left !important;
     }
     
     .data-table tbody tr:hover {
@@ -851,39 +852,80 @@
     .tooltip {
       visibility: hidden;
       opacity: 0;
-      position: absolute;
-      z-index: 1000;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.95);
+      position: fixed;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.98);
       color: white;
-      padding: 16px;
-      border-radius: 12px;
-      font-size: 13px;
+      padding: 20px;
+      border-radius: 16px;
+      font-size: 14px;
       font-weight: 500;
-      line-height: 1.4;
-      white-space: nowrap;
-      max-width: 400px;
-      max-height: 300px;
-      overflow-y: auto;
+      line-height: 1.5;
       white-space: pre-line;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      max-width: 90vw;
+      max-height: 90vh;
+      min-width: 300px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.8);
+      pointer-events: none;
+    }
+    
+    .tooltip.show {
+      visibility: visible;
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+    
+    .tooltip.pinned {
+      position: fixed;
+      z-index: 10000;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(96, 165, 250, 0.5);
     }
     
     .tooltip::after {
       content: "";
       position: absolute;
-      top: 100%;
+      bottom: -10px;
       left: 50%;
-      margin-left: -8px;
-      border-width: 8px;
+      margin-left: -10px;
+      border-width: 10px;
       border-style: solid;
-      border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent;
+      border-color: rgba(15, 23, 42, 0.98) transparent transparent transparent;
     }
     
-    .tooltip-container:hover .tooltip {
-      visibility: visible;
-      opacity: 1;
+    .tooltip.pinned::after {
+      border-color: rgba(15, 23, 42, 0.98) transparent transparent transparent;
+    }
+    
+    .tooltip-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    
+    .tooltip.pinned .tooltip-close {
+      display: flex;
+    }
+    
+    .tooltip-close:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
     
     .tooltip-title {
@@ -901,6 +943,32 @@
       color: #e2e8f0;
     }
     
+    /* Стили для нулевых колонок */
+    .zero-spend-range,
+    .zero-spend-single {
+      background-color: #f3f4f6 !important;
+      color: #9ca3af !important;
+    }
+
+    .zero-spend-range th,
+    .zero-spend-single th {
+      background-color: #e5e7eb !important;
+      color: #6b7280 !important;
+      text-align: center !important;
+    }
+
+    .zero-spend-range td,
+    .zero-spend-single td {
+      background-color: #f9fafb !important;
+      color: #9ca3af !important;
+      text-align: center !important;
+    }
+
+    .zero-spend-range,
+    .zero-spend-single {
+      text-align: center !important;
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .sidebar {
@@ -1097,7 +1165,13 @@
       return urls.map(url => {
         const cleanUrl = url.trim();
         if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
-          return `<a href="${cleanUrl}" target="_blank" class="clickable-url" title="${cleanUrl}">${cleanUrl}</a>`;
+          try {
+            const urlObj = new URL(cleanUrl);
+            const domain = urlObj.hostname.replace('www.', '');
+            return `<a href="${cleanUrl}" target="_blank" class="clickable-url" title="${cleanUrl}">${domain}</a>`;
+          } catch (e) {
+            return `<a href="${cleanUrl}" target="_blank" class="clickable-url" title="${cleanUrl}">${cleanUrl}</a>`;
+          }
         }
         return cleanUrl;
       }).join('<br>');
@@ -1175,21 +1249,56 @@
       hideResults();
       
       // Уничтожаем существующие графики
-      currentCharts.forEach(chart => {
+      console.log('🗑️ Уничтожаем старые графики, количество:', currentCharts.length);
+      currentCharts.forEach((chart, index) => {
         try {
-          chart.destroy();
+          console.log(`🗑️ Уничтожаем график ${index}:`, chart);
+          if (chart && typeof chart.destroy === 'function') {
+            chart.destroy();
+          }
         } catch(e) {
-          console.log('Ошибка при уничтожении графика:', e);
+          console.log('❌ Ошибка при уничтожении графика:', e);
         }
       });
       currentCharts = [];
       
+      // Дополнительная очистка всех canvas элементов
+      const allCanvases = document.querySelectorAll('canvas');
+      console.log('🗑️ Найдено canvas элементов:', allCanvases.length);
+      allCanvases.forEach((canvas, index) => {
+        try {
+          const chartInstance = Chart.getChart(canvas);
+          if (chartInstance) {
+            console.log(`🗑️ Уничтожаем Chart instance ${index}:`, chartInstance.id);
+            chartInstance.destroy();
+          }
+        } catch(e) {
+          console.log('❌ Ошибка при очистке canvas:', e);
+        }
+      });
+      
       // Вызываем Google Apps Script функцию
       try {
         console.log('🚀 Запуск анализа для артикула:', article);
+        console.log('📅 Период:', periodStart, 'до', periodEnd);
+        
+        // Добавляем тайм-аут
+        let timeoutId = setTimeout(() => {
+          console.error('⏰ Тайм-аут выполнения функции');
+          handleError('⏰ Превышено время ожидания!\n\nОбработка данных заняла слишком много времени.\nПопробуйте:\n• Уменьшить период анализа\n• Повторить запрос позже\n• Обратиться к администратору');
+        }, 120000); // 2 минуты
+        
         google.script.run
-          .withSuccessHandler(handleSuccess)
-          .withFailureHandler(handleError)
+          .withSuccessHandler((result) => {
+            clearTimeout(timeoutId);
+            console.log('✅ Функция выполнена успешно, результат:', result);
+            handleSuccess(result);
+          })
+          .withFailureHandler((error) => {
+            clearTimeout(timeoutId);
+            console.error('❌ Ошибка выполнения функции:', error);
+            handleError(error);
+          })
           .buildChartForArticle(article, periodStart, periodEnd);
       } catch (e) {
         console.error('❌ Ошибка при вызове Google Apps Script:', e);
@@ -1244,6 +1353,9 @@
       displayBuyerGroups(data.article, data.buyerGroupsData || {});
       
       showResults();
+      
+      // Инициализируем tooltip после отображения
+      setupTooltipHandlers();
     }
     
     function displayStatusBanner(article, metrics) {
@@ -1374,66 +1486,71 @@
           <div class="metric-subtitle">товарная группа</div>
         </div>
         
-        <div class="metric-card tooltip-container">
+        <div class="metric-card tooltip-container" data-tooltip="groups">
           <div class="metric-header">
             <div class="metric-label">Всего групп</div>
             <div class="metric-icon"><i class="fas fa-layer-group"></i></div>
           </div>
           <div class="metric-value">${metrics.totalGroups}</div>
           <div class="metric-subtitle">активных групп</div>
-          <div class="tooltip">
+          <div class="tooltip" id="tooltip-groups">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-groups')">&times;</button>
             <div class="tooltip-title">📁 Группы объявлений:</div>
             ${formatTooltipContent(metrics.groupNames || 'Нет данных')}
           </div>
         </div>
 
-        <div class="metric-card tooltip-container">
+        <div class="metric-card tooltip-container" data-tooltip="buyers">
           <div class="metric-header">
             <div class="metric-label">Байеров</div>
             <div class="metric-icon"><i class="fas fa-user-tie"></i></div>
           </div>
           <div class="metric-value">${metrics.totalBuyers}</div>
           <div class="metric-subtitle">медиабайеров</div>
-          <div class="tooltip">
+          <div class="tooltip" id="tooltip-buyers">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-buyers')">&times;</button>
             <div class="tooltip-title">👤 Медиабайеры:</div>
             ${formatTooltipContent(metrics.buyerNames || 'Нет данных')}
           </div>
         </div>
 
-        <div class="metric-card tooltip-container">
+        <div class="metric-card tooltip-container" data-tooltip="accounts">
           <div class="metric-header">
             <div class="metric-label">Аккаунтов</div>
             <div class="metric-icon"><i class="fas fa-users"></i></div>
           </div>
           <div class="metric-value">${metrics.totalAccounts}</div>
           <div class="metric-subtitle">рекламных аккаунтов</div>
-          <div class="tooltip">
+          <div class="tooltip" id="tooltip-accounts">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-accounts')">&times;</button>
             <div class="tooltip-title">🔑 Рекламные аккаунты:</div>
             ${formatTooltipContent(metrics.accountNames || 'Нет данных')}
           </div>
         </div>
         
-        <div class="metric-card tooltip-container">
+        <div class="metric-card tooltip-container" data-tooltip="videos">
           <div class="metric-header">
             <div class="metric-label">Уникальных видео</div>
             <div class="metric-icon"><i class="fas fa-video"></i></div>
           </div>
           <div class="metric-value">${metrics.videos}</div>
           <div class="metric-subtitle">креативов</div>
-          <div class="tooltip">
+          <div class="tooltip" id="tooltip-videos">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-videos')">&times;</button>
             <div class="tooltip-title">🎬 Видео креативы:</div>
             ${formatTooltipContent(metrics.videoNames || 'Нет данных')}
           </div>
         </div>
         
-        <div class="metric-card tooltip-container">
+        <div class="metric-card tooltip-container" data-tooltip="sites">
           <div class="metric-header">
             <div class="metric-label">Лендингов</div>
             <div class="metric-icon"><i class="fas fa-globe"></i></div>
           </div>
           <div class="metric-value">${metrics.sites}</div>
           <div class="metric-subtitle">посадочных страниц</div>
-          <div class="tooltip">
+          <div class="tooltip" id="tooltip-sites">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-sites')">&times;</button>
             <div class="tooltip-title">🌐 Посадочные страницы:</div>
             ${formatTooltipContent(metrics.siteUrls || 'Нет данных', true)}
           </div>
@@ -1442,7 +1559,22 @@
     }
     
     function displayGeneralChart(article, data) {
-      const ctx = document.getElementById('generalChart').getContext('2d');
+      console.log('📊 Создаем общий график для:', article);
+      
+      const canvas = document.getElementById('generalChart');
+      if (!canvas) {
+        console.error('❌ General canvas не найден');
+        return;
+      }
+      
+      // Уничтожаем существующий график если есть
+      const existingChart = Chart.getChart(canvas);
+      if (existingChart) {
+        console.log('🗑️ Уничтожаем существующий общий график:', existingChart.id);
+        existingChart.destroy();
+      }
+      
+      const ctx = canvas.getContext('2d');
       
       const gradientCPL = ctx.createLinearGradient(0, 0, 0, 400);
       gradientCPL.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
@@ -1634,14 +1766,10 @@
         'Бюджет группы объявлений'
       ];
       
-      let html = '<thead><tr><th style="min-width: 220px;">Показатель</th>';
-      data.dates.forEach(date => {
-        html += `<th style="min-width: 140px;">${date}</th>`;
-      });
-      html += '</tr></thead><tbody>';
+      let html = '<tbody>';
       
       rows.forEach((rowName, index) => {
-        html += `<tr><td class="metric-row">${rowName}</td>`;
+        html += `<tr><td class="metric-row" style="min-width: 220px;">${rowName}</td>`;
         for (let i = 0; i < data.dates.length; i++) {
           let value = '';
           let className = '';
@@ -1691,10 +1819,19 @@
             case 19: value = data.budget ? data.budget[i] : ''; break;
           }
           
+          const colClass = data.columnClasses && data.columnClasses[i] ? data.columnClasses[i] : 'normal-spend';
+          className += ` ${colClass}`;
+          
+          // Добавляем центрирование для нулевых колонок
+          let additionalStyle = '';
+          if (colClass.includes('zero-spend')) {
+            additionalStyle = ' text-align: center;';
+          }
+          
           if (index === 18) {
-            html += `<td class="${className} url-cell" style="${cellStyle}">${value}</td>`;
+            html += `<td class="${className} url-cell" style="${cellStyle}${additionalStyle}">${value}</td>`;
           } else {
-            html += `<td class="${className}" style="${cellStyle}">${escapeHtml(value)}</td>`;
+            html += `<td class="${className}" style="${cellStyle}${additionalStyle}">${escapeHtml(value)}</td>`;
           }
         }
         html += '</tr>';
@@ -1708,6 +1845,18 @@
       console.log('🌲 Отображаем деревовидную структуру:', buyerGroupsData);
       
       const container = document.getElementById('buyerGroupsContainer');
+      
+      // Очищаем контейнер и уничтожаем все графики внутри
+      const existingCanvases = container.querySelectorAll('canvas');
+      console.log('🗑️ Очищаем контейнер, найдено canvas:', existingCanvases.length);
+      existingCanvases.forEach(canvas => {
+        const chartInstance = Chart.getChart(canvas);
+        if (chartInstance) {
+          console.log('🗑️ Уничтожаем график из контейнера:', chartInstance.id);
+          chartInstance.destroy();
+        }
+      });
+      
       let html = '';
       
       if (Object.keys(buyerGroupsData).length > 0) {
@@ -1725,7 +1874,8 @@
         
         Object.keys(buyerGroupsData).forEach(buyerName => {
           const buyerData = buyerGroupsData[buyerName];
-          const buyerId = `enhanced_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const cleanBuyerName = buyerName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+          const buyerId = `enhanced_buyer_${cleanBuyerName}`;
           const groupsCount = Object.keys(buyerData.groups || {}).length;
           const buyerChartId = `buyer_chart_${buyerId}`;
           
@@ -1795,9 +1945,10 @@
                     Группы объявлений (${groupsCount})
                   </h3>
                   
-                  ${Object.keys(buyerData.groups || {}).map(groupName => {
+                  ${Object.keys(buyerData.groups || {}).map((groupName, groupIndex) => {
                     const groupData = buyerData.groups[groupName];
-                    const nestedGroupId = `enhanced_group_${buyerId}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                    const cleanGroupName = groupName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+                    const nestedGroupId = `enhanced_group_${cleanBuyerName}_${cleanGroupName}_${groupIndex}`;
                     const chartId = `chart_${nestedGroupId}`;
                     const tableId = `table_${nestedGroupId}`;
                     
@@ -1868,10 +2019,22 @@
         
         container.innerHTML = html;
         
-        // Создаем графики и таблицы
-        Object.keys(buyerGroupsData).forEach(buyerName => {
-          const buyerData = buyerGroupsData[buyerName];
-          const buyerId = `enhanced_buyer_${buyerName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        // Проверяем созданные элементы
+        console.log('🔍 Проверяем созданные элементы:');
+        const allCanvases = container.querySelectorAll('canvas');
+        const allTables = container.querySelectorAll('table');
+        console.log('🔍 Canvas элементов:', allCanvases.length);
+        console.log('🔍 Table элементов:', allTables.length);
+        allCanvases.forEach(canvas => console.log('🔍 Canvas ID:', canvas.id));
+        allTables.forEach(table => console.log('🔍 Table ID:', table.id));
+        
+        // Создаем графики и таблицы с задержкой
+        setTimeout(() => {
+          console.log('📊 Начинаем создание графиков через 100мс');
+          Object.keys(buyerGroupsData).forEach((buyerName, buyerIndex) => {
+            const buyerData = buyerGroupsData[buyerName];
+            const cleanBuyerName = buyerName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+            const buyerId = `enhanced_buyer_${cleanBuyerName}`;
           const buyerChartId = `buyer_chart_${buyerId}`;
           const buyerTableId = `buyer_table_${buyerId}`;
           
@@ -1880,16 +2043,19 @@
             displaySegmentTable(buyerTableId, buyerData.buyerData.data);
           }
           
-          Object.keys(buyerData.groups || {}).forEach(groupName => {
+          Object.keys(buyerData.groups || {}).forEach((groupName, groupIndex) => {
             const groupData = buyerData.groups[groupName];
-            const nestedGroupId = `enhanced_group_${buyerId}_${groupName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const cleanGroupName = groupName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+            const nestedGroupId = `enhanced_group_${cleanBuyerName}_${cleanGroupName}_${groupIndex}`;
             const chartId = `chart_${nestedGroupId}`;
             const tableId = `table_${nestedGroupId}`;
             
+            console.log('📊 Создаем элементы для группы:', groupName, 'ID:', chartId, tableId);
             displaySegmentTable(tableId, groupData.data);
             displaySegmentChart(chartId, article, `${buyerName} → ${groupName}`, groupData.data);
           });
         });
+        }, 100); // Закрываем setTimeout
       } else {
         container.innerHTML = `
           <div class="buyer-group-main-section">
@@ -2023,12 +2189,16 @@
     
     function displaySegmentTable(tableId, data) {
       console.log(`📋 Отображаем таблицу ${tableId} с данными:`, data);
+      console.log(`📋 Ищем элемент с ID: "${tableId}"`);
       
       const table = document.getElementById(tableId);
       if (!table) {
-        console.error(`Таблица с ID ${tableId} не найдена`);
+        console.error(`❌ Таблица с ID ${tableId} не найдена`);
+        console.log('📋 Доступные элементы с table:', document.querySelectorAll('table[id*="table"]'));
         return;
       }
+      
+      console.log('✅ Таблица найдена:', table);
       
       const rows = [
         'Дата',
@@ -2050,14 +2220,10 @@
         'Бюджет группы объявлений'
       ];
       
-      let html = '<thead><tr><th style="min-width: 220px;">Показатель</th>';
-      data.dates.forEach(date => {
-        html += `<th style="min-width: 140px;">${date}</th>`;
-      });
-      html += '</tr></thead><tbody>';
+      let html = '<tbody>';
       
       rows.forEach((rowName, index) => {
-        html += `<tr><td class="metric-row">${rowName}</td>`;
+        html += `<tr><td class="metric-row" style="min-width: 220px;">${rowName}</td>`;
         for (let i = 0; i < data.dates.length; i++) {
           let value = '';
           let className = '';
@@ -2104,10 +2270,19 @@
             case 16: value = data.budget ? data.budget[i] : ''; break;
           }
           
+          const colClass = data.columnClasses && data.columnClasses[i] ? data.columnClasses[i] : 'normal-spend';
+          className += ` ${colClass}`;
+          
+          // Добавляем центрирование для нулевых колонок
+          let additionalStyle = '';
+          if (colClass.includes('zero-spend')) {
+            additionalStyle = ' text-align: center;';
+          }
+          
           if (index === 15) {
-            html += `<td class="${className} url-cell" style="${cellStyle}">${value}</td>`;
+            html += `<td class="${className} url-cell" style="${cellStyle}${additionalStyle}">${value}</td>`;
           } else {
-            html += `<td class="${className}" style="${cellStyle}">${escapeHtml(value)}</td>`;
+            html += `<td class="${className}" style="${cellStyle}${additionalStyle}">${escapeHtml(value)}</td>`;
           }
         }
         html += '</tr>';
@@ -2118,7 +2293,26 @@
     }
     
     function displaySegmentChart(chartId, article, segmentName, data) {
-      const ctx = document.getElementById(chartId).getContext('2d');
+      console.log('📊 Создаем график для:', chartId, segmentName);
+      console.log('📊 Ищем canvas с ID:', chartId);
+      
+      const canvas = document.getElementById(chartId);
+      if (!canvas) {
+        console.error('❌ Canvas не найден:', chartId);
+        console.log('📊 Доступные canvas:', document.querySelectorAll('canvas[id*="chart"]'));
+        return;
+      }
+      
+      console.log('✅ Canvas найден:', canvas);
+      
+      // Уничтожаем существующий график если есть
+      const existingChart = Chart.getChart(canvas);
+      if (existingChart) {
+        console.log('🗑️ Уничтожаем существующий график:', existingChart.id);
+        existingChart.destroy();
+      }
+      
+      const ctx = canvas.getContext('2d');
       
       const gradientCPL = ctx.createLinearGradient(0, 0, 0, 400);
       gradientCPL.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
@@ -2303,6 +2497,145 @@
       div.textContent = text;
       return div.innerHTML;
     }
+    
+    // Управление tooltip
+    let activeTooltip = null;
+    
+    function showTooltip(tooltipId, event) {
+      const tooltip = document.getElementById(tooltipId);
+      if (!tooltip) return;
+      
+      // Скрываем активный tooltip если есть
+      if (activeTooltip && activeTooltip !== tooltip) {
+        hideTooltip(activeTooltip.id);
+      }
+      
+      activeTooltip = tooltip;
+      
+      // Показываем tooltip
+      tooltip.classList.add('show');
+      
+      // Позиционируем tooltip
+      positionTooltip(tooltip, event);
+    }
+    
+    function hideTooltip(tooltipId) {
+      const tooltip = document.getElementById(tooltipId);
+      if (!tooltip) return;
+      
+      tooltip.classList.remove('show', 'pinned');
+      if (activeTooltip === tooltip) {
+        activeTooltip = null;
+      }
+    }
+    
+    function pinTooltip(tooltipId, event) {
+      const tooltip = document.getElementById(tooltipId);
+      if (!tooltip) return;
+      
+      // Скрываем другие tooltip
+      document.querySelectorAll('.tooltip.pinned').forEach(t => {
+        if (t !== tooltip) {
+          t.classList.remove('show', 'pinned');
+        }
+      });
+      
+      activeTooltip = tooltip;
+      tooltip.classList.add('show', 'pinned');
+      
+      // Позиционируем tooltip
+      positionTooltip(tooltip, event);
+    }
+    
+    function positionTooltip(tooltip, event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      
+      let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+      let top = rect.top - tooltipRect.height - 20;
+      
+      // Проверяем границы экрана
+      if (left < 10) left = 10;
+      if (left + tooltipRect.width > viewport.width - 10) {
+        left = viewport.width - tooltipRect.width - 10;
+      }
+      
+      if (top < 10) {
+        top = rect.bottom + 20;
+        tooltip.style.transform = 'none';
+        tooltip.querySelector('::after')?.style.setProperty('top', '-10px');
+        tooltip.querySelector('::after')?.style.setProperty('bottom', 'auto');
+      }
+      
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+    
+    // Глобальные обработчики событий
+    // Настройка обработчиков tooltip
+    function setupTooltipHandlers() {
+      // Удаляем старые обработчики
+      document.removeEventListener('click', handleDocumentClick);
+      
+      // Добавляем обработчики для каждого tooltip-container
+      document.querySelectorAll('.tooltip-container').forEach(container => {
+        const tooltipType = container.dataset.tooltip;
+        const tooltipId = `tooltip-${tooltipType}`;
+        
+        // Убираем старые обработчики
+        container.replaceWith(container.cloneNode(true));
+        
+        // Получаем новый элемент
+        const newContainer = document.querySelector(`[data-tooltip="${tooltipType}"]`);
+        
+        // Hover для показа
+        newContainer.addEventListener('mouseenter', (e) => {
+          if (!document.getElementById(tooltipId).classList.contains('pinned')) {
+            showTooltip(tooltipId, e);
+          }
+        });
+        
+        // Клик для фиксации
+        newContainer.addEventListener('click', (e) => {
+          e.stopPropagation();
+          pinTooltip(tooltipId, e);
+        });
+        
+        // Скрытие при уходе мыши (если не зафиксирован)
+        newContainer.addEventListener('mouseleave', () => {
+          const tooltip = document.getElementById(tooltipId);
+          if (tooltip && !tooltip.classList.contains('pinned')) {
+            setTimeout(() => {
+              if (!tooltip.classList.contains('pinned')) {
+                hideTooltip(tooltipId);
+              }
+            }, 300);
+          }
+        });
+      });
+      
+      // Глобальный обработчик клика для скрытия зафиксированных tooltip
+      document.addEventListener('click', handleDocumentClick);
+    }
+    
+    function handleDocumentClick(e) {
+      // Проверяем, что клик не по tooltip или его контейнеру
+      if (!e.target.closest('.tooltip-container') && !e.target.closest('.tooltip')) {
+        document.querySelectorAll('.tooltip.pinned').forEach(tooltip => {
+          hideTooltip(tooltip.id);
+        });
+      }
+    }
+    
+    window.showTooltip = showTooltip;
+    window.hideTooltip = hideTooltip;
+    window.pinTooltip = pinTooltip;
+    window.setupTooltipHandlers = setupTooltipHandlers;
+    
   </script>
 </body>
 </html>
