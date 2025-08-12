@@ -160,6 +160,13 @@ function include(filename) {
  * Основная функция для построения аналитики - ИСПРАВЛЕННАЯ связка байеров и метрик
  */
 function buildChartForArticle(article, periodStart, periodEnd) {
+  console.log('🔥 =================================');
+  console.log('🔥 НАЧАЛО ФУНКЦИИ buildChartForArticle');
+  console.log('🔥 Артикул:', article);
+  console.log('🔥 Период с:', periodStart);
+  console.log('🔥 Период до:', periodEnd);
+  console.log('🔥 =================================');
+  
   try {
     // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
     function formatValueByRow(value, rowIndex) {
@@ -302,7 +309,17 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     }
 
     if (!article || article.trim() === '') {
-      throw new Error('Артикул не может быть пустым');
+      console.log('❌ Пустой артикул');
+      throw new Error('📝 Артикул не может быть пустым!\n\nВведите корректный артикул для анализа.');
+    }
+
+    // Проверяем формат артикула
+    article = article.trim().toUpperCase();
+    console.log('📝 Обработанный артикул:', article);
+    
+    if (article.length < 3) {
+      console.log('❌ Слишком короткий артикул:', article);
+      throw new Error(`📝 Артикул "${article}" слишком короткий!\n\nАртикул должен содержать минимум 3 символа.`);
     }
 
     console.log('🚀 Starting analysis for article:', article);
@@ -469,14 +486,22 @@ function buildChartForArticle(article, periodStart, periodEnd) {
 
     // Получение данных из БД - ОДНИМ ЗАПРОСОМ
     console.log('🔍 Fetching all data with combined query...');
+    console.log('🔍 SQL запрос:', combinedSql);
     let allData;
     
     try {
+      console.log('🔍 Вызываем getDataFromDatabase...');
       allData = getDataFromDatabase(combinedSql);
+      console.log('🔍 Результат getDataFromDatabase:', allData ? allData.length : 'null/undefined', 'записей');
+      
       if (!allData || allData.length === 0) {
+        console.log('❌ Данные не найдены для артикула:', article);
         throw new Error(`📊 Данные не найдены!\n\nАртикул "${article}" не найден в базе данных.\n\nВозможные причины:\n• Проверьте правильность написания артикула\n• Артикул еще не добавлен в систему\n• Нет активных кампаний за выбранный период`);
       }
+      
+      console.log('✅ Данные успешно получены:', allData.length, 'записей');
     } catch (error) {
+      console.log('❌ Ошибка при получении данных:', error);
       if (error.message.includes('📊')) {
         throw error; // Перебрасываем наши пользовательские ошибки как есть
       }
@@ -938,6 +963,89 @@ function buildChartForArticle(article, periodStart, periodEnd) {
 
       const segmentCR = (segmentClicks > 0) ? (segmentLeads / segmentClicks) * 100 : 0;
       
+      // Группируем даты в диапазоны для сегмента
+      const segmentDateRanges = groupDateRanges(segmentData.dates, segmentData.spendDay);
+
+      // Создаем новые массивы с диапазонами для сегмента
+      const newSegmentData = {
+        dates: [],
+        ratings: [],
+        cplDay: [],
+        leadsDay: [],
+        spendDay: [],
+        conversionDay: [],
+        maxCPL: [],
+        cplCumulative: [],
+        cplCumulativeColors: [],
+        cplCumulativeArrows: [],
+        freq: [],
+        ctr: [],
+        cpm: [],
+        linkClicks: [],
+        cpc: [],
+        avgWatchTime: [],
+        videoName: [],
+        siteUrl: [],
+        budget: [],
+        columnSpans: [],
+        columnClasses: []
+      };
+
+      segmentDateRanges.forEach(range => {
+        if (range.isZeroRange && range.startIndex !== range.endIndex) {
+          const rangeLabel = formatDateRange(range.startDate, range.endDate);
+          newSegmentData.dates.push(rangeLabel);
+          newSegmentData.columnSpans.push(range.endIndex - range.startIndex + 1);
+          newSegmentData.columnClasses.push('zero-spend-range');
+          
+          newSegmentData.ratings.push('');
+          newSegmentData.cplDay.push(0);
+          newSegmentData.leadsDay.push(0);
+          newSegmentData.spendDay.push(0);
+          newSegmentData.conversionDay.push('0.00%');
+          newSegmentData.maxCPL.push(segmentData.maxCPL[range.startIndex] || 0);
+          newSegmentData.cplCumulative.push(0);
+          newSegmentData.cplCumulativeColors.push('gray');
+          newSegmentData.cplCumulativeArrows.push('');
+          newSegmentData.freq.push('');
+          newSegmentData.ctr.push('');
+          newSegmentData.cpm.push('');
+          newSegmentData.linkClicks.push('');
+          newSegmentData.cpc.push('');
+          newSegmentData.avgWatchTime.push('');
+          newSegmentData.videoName.push('');
+          newSegmentData.siteUrl.push('');
+          newSegmentData.budget.push('');
+        } else {
+          for (let i = range.startIndex; i <= range.endIndex; i++) {
+            newSegmentData.dates.push(segmentData.dates[i]);
+            newSegmentData.columnSpans.push(1);
+            newSegmentData.columnClasses.push(segmentData.spendDay[i] === 0 ? 'zero-spend-single' : 'normal-spend');
+            
+            newSegmentData.ratings.push(segmentData.ratings[i]);
+            newSegmentData.cplDay.push(segmentData.cplDay[i]);
+            newSegmentData.leadsDay.push(segmentData.leadsDay[i]);
+            newSegmentData.spendDay.push(segmentData.spendDay[i]);
+            newSegmentData.conversionDay.push(segmentData.conversionDay[i]);
+            newSegmentData.maxCPL.push(segmentData.maxCPL[i]);
+            newSegmentData.cplCumulative.push(segmentData.cplCumulative[i]);
+            newSegmentData.cplCumulativeColors.push(segmentData.cplCumulativeColors[i]);
+            newSegmentData.cplCumulativeArrows.push(segmentData.cplCumulativeArrows[i]);
+            newSegmentData.freq.push(segmentData.freq[i]);
+            newSegmentData.ctr.push(segmentData.ctr[i]);
+            newSegmentData.cpm.push(segmentData.cpm[i]);
+            newSegmentData.linkClicks.push(segmentData.linkClicks[i]);
+            newSegmentData.cpc.push(segmentData.cpc[i]);
+            newSegmentData.avgWatchTime.push(segmentData.avgWatchTime[i]);
+            newSegmentData.videoName.push(segmentData.videoName[i]);
+            newSegmentData.siteUrl.push(segmentData.siteUrl[i]);
+            newSegmentData.budget.push(segmentData.budget[i]);
+          }
+        }
+      });
+
+      Object.assign(segmentData, newSegmentData);
+
       console.log(`✅ Processed segment ${segmentName}: ${activeDaysSegment} active days, ${segmentVideos.size} videos, ${segmentSites.size} sites`);
       
       return {
@@ -951,6 +1059,61 @@ function buildChartForArticle(article, periodStart, periodEnd) {
           sites: segmentSites.size
         }
       };
+    }
+
+    // Функция для группировки дат в диапазоны
+    function groupDateRanges(dates, spends) {
+      const ranges = [];
+      let currentRange = null;
+      
+      for (let i = 0; i < dates.length; i++) {
+        const isZeroSpend = spends[i] === 0;
+        
+        if (isZeroSpend) {
+          if (!currentRange) {
+            currentRange = {
+              startIndex: i,
+              endIndex: i,
+              startDate: dates[i],
+              endDate: dates[i],
+              isZeroRange: true
+            };
+          } else {
+            currentRange.endIndex = i;
+            currentRange.endDate = dates[i];
+          }
+        } else {
+          if (currentRange) {
+            ranges.push(currentRange);
+            currentRange = null;
+          }
+          ranges.push({
+            startIndex: i,
+            endIndex: i,
+            startDate: dates[i],
+            endDate: dates[i],
+            isZeroRange: false
+          });
+        }
+      }
+      
+      if (currentRange) {
+        ranges.push(currentRange);
+      }
+      
+      return ranges;
+    }
+
+    // Функция для форматирования диапазона дат
+    function formatDateRange(startDate, endDate) {
+      if (startDate === endDate) {
+        return startDate;
+      }
+      
+      const startShort = startDate.substring(0, 5);
+      const endShort = endDate.substring(0, 5);
+      
+      return `${startShort}-${endShort}`;
     }
 
     // Подготовка данных для общей таблицы
@@ -977,7 +1140,9 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       avgWatchTime: [],
       videoName: [],
       siteUrl: [],
-      budget: []
+      budget: [],
+      columnSpans: [],
+      columnClasses: []
     };
 
     let activeDays = 0, daysInNorm = 0, daysBelowAllowed = 0;
@@ -1108,6 +1273,98 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       prevDayGood = dayIsGood;
     }
 
+    // Группируем даты в диапазоны
+    const dateRanges = groupDateRanges(generalData.dates, generalData.spendDay);
+
+    // Создаем новые массивы с диапазонами
+    const newGeneralData = {
+      dates: [],
+      ratings: [],
+      cplDay: [],
+      leadsDay: [],
+      spendDay: [],
+      conversionDay: [],
+      maxCPL: [],
+      cplCumulative: [],
+      cplCumulativeColors: [],
+      cplCumulativeArrows: [],
+      groups: [],
+      buyers: [],
+      accounts: [],
+      freq: [],
+      ctr: [],
+      cpm: [],
+      linkClicks: [],
+      cpc: [],
+      avgWatchTime: [],
+      videoName: [],
+      siteUrl: [],
+      budget: [],
+      columnSpans: [],
+      columnClasses: []
+    };
+
+    dateRanges.forEach(range => {
+      if (range.isZeroRange && range.startIndex !== range.endIndex) {
+        const rangeLabel = formatDateRange(range.startDate, range.endDate);
+        newGeneralData.dates.push(rangeLabel);
+        newGeneralData.columnSpans.push(range.endIndex - range.startIndex + 1);
+        newGeneralData.columnClasses.push('zero-spend-range');
+        
+        newGeneralData.ratings.push('');
+        newGeneralData.cplDay.push(0);
+        newGeneralData.leadsDay.push(0);
+        newGeneralData.spendDay.push(0);
+        newGeneralData.conversionDay.push('0.00%');
+        newGeneralData.maxCPL.push(generalData.maxCPL[range.startIndex]);
+        newGeneralData.cplCumulative.push(0);
+        newGeneralData.cplCumulativeColors.push('gray');
+        newGeneralData.cplCumulativeArrows.push('');
+        newGeneralData.groups.push('');
+        newGeneralData.buyers.push('');
+        newGeneralData.accounts.push('');
+        newGeneralData.freq.push('');
+        newGeneralData.ctr.push('');
+        newGeneralData.cpm.push('');
+        newGeneralData.linkClicks.push('');
+        newGeneralData.cpc.push('');
+        newGeneralData.avgWatchTime.push('');
+        newGeneralData.videoName.push('');
+        newGeneralData.siteUrl.push('');
+        newGeneralData.budget.push('');
+      } else {
+        for (let i = range.startIndex; i <= range.endIndex; i++) {
+          newGeneralData.dates.push(generalData.dates[i]);
+          newGeneralData.columnSpans.push(1);
+          newGeneralData.columnClasses.push(generalData.spendDay[i] === 0 ? 'zero-spend-single' : 'normal-spend');
+          
+          newGeneralData.ratings.push(generalData.ratings[i]);
+          newGeneralData.cplDay.push(generalData.cplDay[i]);
+          newGeneralData.leadsDay.push(generalData.leadsDay[i]);
+          newGeneralData.spendDay.push(generalData.spendDay[i]);
+          newGeneralData.conversionDay.push(generalData.conversionDay[i]);
+          newGeneralData.maxCPL.push(generalData.maxCPL[i]);
+          newGeneralData.cplCumulative.push(generalData.cplCumulative[i]);
+          newGeneralData.cplCumulativeColors.push(generalData.cplCumulativeColors[i]);
+          newGeneralData.cplCumulativeArrows.push(generalData.cplCumulativeArrows[i]);
+          newGeneralData.groups.push(generalData.groups[i]);
+          newGeneralData.buyers.push(generalData.buyers[i]);
+          newGeneralData.accounts.push(generalData.accounts[i]);
+          newGeneralData.freq.push(generalData.freq[i]);
+          newGeneralData.ctr.push(generalData.ctr[i]);
+          newGeneralData.cpm.push(generalData.cpm[i]);
+          newGeneralData.linkClicks.push(generalData.linkClicks[i]);
+          newGeneralData.cpc.push(generalData.cpc[i]);
+          newGeneralData.avgWatchTime.push(generalData.avgWatchTime[i]);
+          newGeneralData.videoName.push(generalData.videoName[i]);
+          newGeneralData.siteUrl.push(generalData.siteUrl[i]);
+          newGeneralData.budget.push(generalData.budget[i]);
+        }
+      }
+    });
+
+    Object.assign(generalData, newGeneralData);
+
     // ИСПРАВЛЕННАЯ СТРУКТУРА: Подготовка данных по Байер → Группа
     console.log('🌲 Processing buyer-group hierarchy data...');
     const buyerGroupsData = {};
@@ -1158,7 +1415,7 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     console.log('📊 Total unique videos found:', globalVideos.size);
     console.log('👥 Buyers with groups:', Object.keys(buyerGroupsData));
 
-    return {
+    const finalResult = {
       article: article,
       generalData: generalData,
       buyerGroupsData: buyerGroupsData, // ИСПРАВЛЕННАЯ ДЕРЕВОВИДНАЯ СТРУКТУРА с полными метриками
@@ -1191,16 +1448,33 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         zoneAE: zoneAEFormatted
       }
     };
+    
+    console.log('🔥 =================================');
+    console.log('🔥 ВОЗВРАЩАЕМ РЕЗУЛЬТАТ');
+    console.log('🔥 Артикул:', finalResult.article);
+    console.log('🔥 Количество дат:', finalResult.generalData.dates.length);
+    console.log('🔥 Количество байеров:', Object.keys(finalResult.buyerGroupsData).length);
+    console.log('🔥 =================================');
+    
+    return finalResult;
 
   } catch (error) {
-    console.error('❌ Ошибка в buildChartForArticle:', error);
+    console.log('🔥 =================================');
+    console.log('🔥 ОШИБКА В buildChartForArticle');
+    console.log('🔥 Тип ошибки:', typeof error);
+    console.log('🔥 Сообщение ошибки:', error.message);
+    console.log('🔥 Полная ошибка:', error);
+    console.log('🔥 Stack trace:', error.stack);
+    console.log('🔥 =================================');
     
     // Если это уже наша пользовательская ошибка, передаем как есть
-    if (error.message.includes('📊') || error.message.includes('🔌') || error.message.includes('🚨') || error.message.includes('🔧')) {
+    if (error.message && (error.message.includes('📊') || error.message.includes('🔌') || error.message.includes('🚨') || error.message.includes('🔧') || error.message.includes('📝'))) {
+      console.log('🔥 Перебрасываем пользовательскую ошибку');
       throw error;
     }
     
     // Для всех остальных ошибок
-    throw new Error(`⚠️ Произошла неожиданная ошибка!\n\nТехническая информация:\n${error.message}\n\nРекомендации:\n• Обновите страницу и попробуйте снова\n• Проверьте правильность введенных данных\n• Обратитесь к администратору`);
+    console.log('🔥 Создаем общую ошибку');
+    throw new Error(`⚠️ Произошла неожиданная ошибка!\n\nАртикул: ${article}\n\nТехническая информация:\n${error.message}\n\nРекомендации:\n• Обновите страницу и попробуйте снова\n• Проверьте правильность введенных данных\n• Обратитесь к администратору`);
   }
 }
