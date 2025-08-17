@@ -1375,7 +1375,20 @@
       function handleError(error) {
         console.error("❌ Ошибка Google Apps Script:", error);
         showLoading(false);
-        showError(error.toString());
+        
+        // Извлекаем чистое сообщение для пользователя
+        let userMessage = error.toString();
+        
+        // Убираем технические префиксы
+        userMessage = userMessage.replace(/^ScriptError:\s*Error:\s*/, "");
+        userMessage = userMessage.replace(/^Error:\s*/, "");
+        
+        // Убираем упоминания администратора и технические детали
+        userMessage = userMessage.replace(/\n\nОбратитесь к администратору[.\s\S]*$/g, "");
+        userMessage = userMessage.replace(/\n\nТехническая информация[.\s\S]*$/g, "");
+        userMessage = userMessage.replace(/\n\nРекомендации[.\s\S]*$/g, "");
+        
+        showError(userMessage);
       }
 
       function showLoading(show) {
@@ -2075,7 +2088,9 @@
                     </h3>
                     <div class="buyer-metrics-grid">
                       ${generateEnhancedBuyerMetrics(
-                        buyerData.buyerData.metrics
+                        buyerData.buyerData.metrics,
+                        buyerName,
+                        buyerData
                       )}
                     </div>
                   </div>
@@ -2335,7 +2350,16 @@
         }
       }
 
-      function generateEnhancedBuyerMetrics(metrics) {
+      function generateEnhancedBuyerMetrics(metrics, buyerName, buyerGroupsData) {
+        const groupsCount = Object.keys(buyerGroupsData.groups || {}).length;
+        
+        // Собираем данные для tooltips
+        const groupNames = Object.keys(buyerGroupsData.groups || {}).join('\n') || 'Нет данных';
+        const videoNames = metrics.videoNames || 'Нет данных';
+        const siteUrls = metrics.siteUrls || 'Нет данных';
+        
+        const cleanBuyerName = buyerName.replace(/[^a-zA-Z0-9]/g, '_');
+        
         return `
         <div class="metric-card-enhanced">
           <div class="metric-header">
@@ -2373,22 +2397,46 @@
           <div class="metric-subtitle">средний CR</div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card-enhanced tooltip-container" data-tooltip="buyer-groups-${cleanBuyerName}">
+          <div class="metric-header">
+            <div class="metric-label">Всего групп</div>
+            <div class="metric-icon"><i class="fas fa-layer-group"></i></div>
+          </div>
+          <div class="metric-value">${groupsCount}</div>
+          <div class="metric-subtitle">групп объявлений</div>
+          <div class="tooltip" id="tooltip-buyer-groups-${cleanBuyerName}">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-buyer-groups-${cleanBuyerName}')">&times;</button>
+            <div class="tooltip-title">📁 Группы объявлений байера ${escapeHtml(buyerName)}:</div>
+            ${formatTooltipContent(groupNames)}
+          </div>
+        </div>
+        
+        <div class="metric-card-enhanced tooltip-container" data-tooltip="buyer-videos-${cleanBuyerName}">
           <div class="metric-header">
             <div class="metric-label">Видео</div>
             <div class="metric-icon"><i class="fas fa-video"></i></div>
           </div>
           <div class="metric-value">${metrics.videos}</div>
           <div class="metric-subtitle">уникальных</div>
+          <div class="tooltip" id="tooltip-buyer-videos-${cleanBuyerName}">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-buyer-videos-${cleanBuyerName}')">&times;</button>
+            <div class="tooltip-title">🎬 Видео креативы байера ${escapeHtml(buyerName)}:</div>
+            ${formatTooltipContent(videoNames)}
+          </div>
         </div>
         
-        <div class="metric-card-enhanced">
+        <div class="metric-card-enhanced tooltip-container" data-tooltip="buyer-sites-${cleanBuyerName}">
           <div class="metric-header">
             <div class="metric-label">Лендинги</div>
             <div class="metric-icon"><i class="fas fa-globe"></i></div>
           </div>
           <div class="metric-value">${metrics.sites}</div>
           <div class="metric-subtitle">посадочных страниц</div>
+          <div class="tooltip" id="tooltip-buyer-sites-${cleanBuyerName}">
+            <button class="tooltip-close" onclick="hideTooltip('tooltip-buyer-sites-${cleanBuyerName}')">&times;</button>
+            <div class="tooltip-title">🌐 Посадочные страницы байера ${escapeHtml(buyerName)}:</div>
+            ${formatTooltipContent(siteUrls, true)}
+          </div>
         </div>
       `;
       }
