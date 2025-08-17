@@ -324,11 +324,12 @@ function buildChartForArticle(article, periodStart, periodEnd) {
 
       switch (rowIndex) {
         case 11:
-        case 12:
         case 13:
         case 15:
         case 16:
           return num.toFixed(2).replace(".", ",");
+        case 12:
+          return (num * 100).toFixed(2).replace(".", ",") + "%";
         case 14:
           return String(Math.floor(num));
         default:
@@ -558,16 +559,44 @@ function buildChartForArticle(article, periodStart, periodEnd) {
           }
         }
 
+        // ПРОВЕРКА 1: Артикул существует
+        if (!articleRow) {
+          console.log("❌ Article not found in КАПЫ 3.0");
+          throw new Error(
+            `📝 Неверный артикул!\n\nАртикул "${article}" не найден в системе.\n\nПроверьте правильность написания артикула.`
+          );
+        }
+
+        // ПРОВЕРКА 2: Разрешение на просмотр (колонка BQ = столбец 69)
+        const permissionValue = sheetKapy.getRange(articleRow, 69).getValue();
+        console.log("🔐 Checking permission for article:", article, "Permission value:", permissionValue);
+        
+        if (permissionValue !== 1 && permissionValue !== "1") {
+          console.log("❌ No permission to view article:", article);
+          throw new Error(
+            `🔒 Нет разрешения на просмотр!\n\nДоступ к артикулу "${article}" ограничен.\n\nОбратитесь к администратору для получения разрешения.`
+          );
+        }
+
+        console.log("✅ Article found and permission granted:", article);
+
         if (articleRow) {
           console.log("✅ Found article in КАПЫ 3.0 at row:", articleRow);
           const rawAB = sheetKapy.getRange(articleRow, 28).getValue();
           const rawAF = sheetKapy.getRange(articleRow, 32).getValue();
-          maxCPLThreshold =
-            rawAB !== "" && !isNaN(rawAB)
-              ? Number(rawAB)
-              : rawAF !== "" && !isNaN(rawAF)
-              ? Number(rawAF)
-              : 3.5;
+          
+          // Проверяем AB (колонка 28) - приоритет
+          if (rawAB !== null && rawAB !== undefined && rawAB !== "" && !isNaN(rawAB) && Number(rawAB) > 0) {
+            maxCPLThreshold = Number(rawAB);
+          }
+          // Если AB пустая, проверяем AF (колонка 32)
+          else if (rawAF !== null && rawAF !== undefined && rawAF !== "" && !isNaN(rawAF) && Number(rawAF) > 0) {
+            maxCPLThreshold = Number(rawAF);
+          }
+          // Если обе пустые - константа 3.5
+          else {
+            maxCPLThreshold = 3.5;
+          }
 
           status = String(
             sheetKapy.getRange(articleRow, 4).getValue() || "Активный"
@@ -672,6 +701,14 @@ function buildChartForArticle(article, periodStart, periodEnd) {
       }
     } catch (e) {
       console.log("❌ Ошибка при получении данных из КАПЫ 3.0:", e);
+      // Если это уже наша пользовательская ошибка, перебрасываем как есть
+      if (e.message && (e.message.includes("📝") || e.message.includes("🔒"))) {
+        throw e;
+      }
+      // Для всех остальных ошибок
+      throw new Error(
+        `📋 Ошибка доступа к базе данных!\n\nТехническая информация: ${e.message}\n\nОбратитесь к администратору.`
+      );
     }
 
     const displayMaxCPL = maxCPLThreshold;
@@ -736,7 +773,6 @@ function buildChartForArticle(article, periodStart, periodEnd) {
     adv_id,
     cpc,
     cpm,
-    clicks_on_link,
     ctr,
     frequency,
     average_time_on_video,
@@ -993,8 +1029,11 @@ function buildChartForArticle(article, periodStart, periodEnd) {
           buyerGroupsMap[buyerInfo.buyer].add(groupName);
         }
 
-        totalLeadsAll += leads;
-        totalClicksAll += siteClicks;
+        // Учитываем день для CR только если есть данные о кликах
+        if (hasMetrics && siteClicks > 0) {
+          totalLeadsAll += leads;
+          totalClicksAll += siteClicks;
+        }
 
         if (!minDate || dateObj < minDate) minDate = dateObj;
         if (!maxDate || dateObj > maxDate) maxDate = dateObj;
@@ -1029,8 +1068,8 @@ function buildChartForArticle(article, periodStart, periodEnd) {
             row.cpm !== undefined && row.cpm !== null ? String(row.cpm) : ""
           );
           targetObject[dateKey].linkClicks.push(
-            row.clicks_on_link !== undefined && row.clicks_on_link !== null
-              ? String(row.clicks_on_link)
+            row.clicks_on_link_tracker !== undefined && row.clicks_on_link_tracker !== null
+              ? String(row.clicks_on_link_tracker)
               : ""
           );
           targetObject[dateKey].cpc.push(
@@ -1312,18 +1351,19 @@ function buildChartForArticle(article, periodStart, periodEnd) {
           continue;
         }
 
-        let segmentDayConversion = 0;
+        let segmentDayConversionText = "--";
         if (fbDataSegment.linkClicks && dayLeads > 0) {
           const segmentDayClicks = sumMultilineValues(fbDataSegment.linkClicks);
           if (segmentDayClicks > 0) {
-            segmentDayConversion = (dayLeads / segmentDayClicks) * 100;
+            const segmentDayConversion = (dayLeads / segmentDayClicks) * 100;
+            segmentDayConversionText = segmentDayConversion.toFixed(2) + "%";
           }
         }
 
         segmentData.cplDay.push(dayCpl);
         segmentData.leadsDay.push(dayLeads);
         segmentData.spendDay.push(daySpend);
-        segmentData.conversionDay.push(segmentDayConversion.toFixed(2) + "%");
+        segmentData.conversionDay.push(segmentDayConversionText);
         segmentData.maxCPL.push(displayMaxCPL);
 
         // Группы для байера
@@ -1380,8 +1420,11 @@ function buildChartForArticle(article, periodStart, periodEnd) {
           }
         });
 
-        segmentLeads += dayLeads;
-        segmentClicks += sumMultilineValues(fbDataSegment.linkClicks || []);
+        const dayClicksForCR = sumMultilineValues(fbDataSegment.linkClicks || []);
+        if (dayClicksForCR > 0) {
+          segmentLeads += dayLeads;
+          segmentClicks += dayClicksForCR;
+        }
 
         let rating;
         if (dayLeads === 0 && daySpend > 0) {
@@ -1532,6 +1575,8 @@ function buildChartForArticle(article, periodStart, periodEnd) {
           cr: segmentCR.toFixed(2).replace(".", ",") + "%",
           videos: segmentVideos.size,
           sites: segmentSites.size,
+          videoNames: Array.from(segmentVideos).join('\n') || 'Нет данных',
+          siteUrls: Array.from(segmentSites).join('\n') || 'Нет данных',
         },
       };
     }
@@ -1585,10 +1630,12 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         return startDate;
       }
 
-      const startShort = startDate.substring(0, 5);
-      const endShort = endDate.substring(0, 5);
+      // Вычисляем количество дней в диапазоне
+      const start = new Date(startDate.split('.').reverse().join('-'));
+      const end = new Date(endDate.split('.').reverse().join('-'));
+      const daysDiff = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
-      return `${startShort}-${endShort}`;
+      return `${daysDiff} д.`;
     }
 
     // Подготовка данных для общей таблицы
@@ -1668,18 +1715,19 @@ function buildChartForArticle(article, periodStart, periodEnd) {
 
       const dayCpl = dayLeads > 0 ? daySpend / dayLeads : 0;
 
-      let dayConversion = 0;
+      let dayConversionText = "--";
       if (fbDataMap[dateKey] && fbDataMap[dateKey].linkClicks && dayLeads > 0) {
         const dayClicks = sumMultilineValues(fbDataMap[dateKey].linkClicks);
         if (dayClicks > 0) {
-          dayConversion = (dayLeads / dayClicks) * 100;
+          const dayConversion = (dayLeads / dayClicks) * 100;
+          dayConversionText = dayConversion.toFixed(2) + "%";
         }
       }
 
       generalData.cplDay.push(dayCpl);
       generalData.leadsDay.push(dayLeads);
       generalData.spendDay.push(daySpend);
-      generalData.conversionDay.push(dayConversion.toFixed(2) + "%");
+      generalData.conversionDay.push(dayConversionText);
       generalData.maxCPL.push(displayMaxCPL);
 
       // Получаем данные дня
@@ -2061,7 +2109,8 @@ function buildChartForArticle(article, periodStart, periodEnd) {
         error.message.includes("🔌") ||
         error.message.includes("🚨") ||
         error.message.includes("🔧") ||
-        error.message.includes("📝"))
+        error.message.includes("📝") ||
+        error.message.includes("🔒"))
     ) {
       console.log("🔥 Перебрасываем пользовательскую ошибку");
       throw error;
